@@ -1,23 +1,14 @@
-import { useState } from 'react'
-
 import {
 	Box,
 	Heading,
 	Text,
 	SimpleGrid,
-	// Input,
 	Button,
-	FormLabel,
-	FormControl,
-	FormHelperText,
-	FormErrorMessage,
-	Container,
 	Flex,
-	Wrap,
 	WrapItem,
 } from '@chakra-ui/react'
 import Image from 'next/image'
-import { useForm } from 'react-hook-form'
+import { useForm, SubmitHandler } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 
@@ -25,6 +16,12 @@ import Input from '../components/Form/Input'
 
 import VolunteersImage from '../../public/assets/images/team-of-volunteers-stacking-hands.jpg'
 import Logo from '../../public/assets/images/logo/Donating.png'
+
+type SignInFormData = {
+	email: string;
+	password: string;
+	resolve?: number;
+  }
 
 const schema = yup
 	.object({
@@ -34,10 +31,18 @@ const schema = yup
 	.required()
 
 export default function Home() {
+
+	const handleSignIn: SubmitHandler<SignInFormData> =  async (values) => {
+      
+		await new Promise(resolve => setTimeout(resolve, 2000))
+  
+		console.log(values)
+	}
+
 	const {
 		register,
 		handleSubmit,
-		formState: { errors },
+		formState
 	} = useForm({
 		resolver: yupResolver(schema),
 	})
@@ -53,7 +58,7 @@ export default function Home() {
 				bg="#263734"
 			>
 				<Box borderRadius={8} py="16" px="40" bg="#00715D">
-					<form onSubmit={handleSubmit(onSubmit)}>
+					<form onSubmit={handleSubmit(handleSignIn)}>
 						<Flex gap="2" direction='column' mb="10">
 							<WrapItem mb="2">
 								<Image
@@ -89,7 +94,7 @@ export default function Home() {
 										},
 									})} />
 							<Input
-								type="password"
+								type="password"												
 								name="password"
 								label="Senha"
 								placeholder="Digite sua senha"
@@ -110,6 +115,8 @@ export default function Home() {
 								type="submit"
 								colorScheme="yellow"
 								size="lg"
+								isLoading={formState.isSubmitting}
+								
 							>
 								Entrar
 							</Button>

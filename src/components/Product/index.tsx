@@ -4,7 +4,7 @@ import Image from 'next/image'
 import ProductImage from '../../../public/assets/images/feijao.png'
 
 interface ProductProps {
-	children: ReactNode
+	children?: ReactNode
 }
 
 function Product({ children }: ProductProps) {

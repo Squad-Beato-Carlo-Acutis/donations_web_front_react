@@ -21,7 +21,7 @@ const Header: React.FC = () => (
 					size="md"
 					name="Kola Tioluwani"
 					src="https://bit.ly/kent-c-dodds"
-				/>{' '}
+				/>
 			</WrapItem>
 		</Flex>
 	</Flex>
