@@ -24,6 +24,7 @@ import { useEffect, useState } from 'react'
 import {
 	CadConferenceFormData,
 	createConference,
+	deleteConference,
 	getConferences,
 	updateConference,
 } from '../repository/donationsApi/conferences'
@@ -78,7 +79,7 @@ export default function CreateConference() {
 
 			Swal.fire(
 				'Sucesso',
-				`Conferencia ${
+				`Conferência ${
 					isNewConference ? 'cadastrada' : 'atualizada'
 				} com sucesso`,
 				'success'
@@ -92,6 +93,36 @@ export default function CreateConference() {
 			)
 			console.error(err)
 		}
+	}
+
+	const handlerDeleteConference = async (index: number) => {
+		Swal.fire({
+			title: 'Atenção!!!',
+			text: 'Todos os dados dessa conferência, como movimentações de estoque e informações serão deletados sem a possibilidades de recuperação, deseja continuar?',
+			showDenyButton: true,
+			confirmButtonText: 'Cancelar',
+			denyButtonText: `Continuar`,
+		})
+			.then((result) => {
+				if (result.isDenied) {
+					const { id } = customData[index]
+					deleteConference(1, id)
+					getData()
+					Swal.fire(
+						'Conferência deletada com sucesso!',
+						'',
+						'success'
+					)
+				}
+			})
+			.catch((err) => {
+				Swal.fire(
+					'Erro',
+					'Ocorreu um erro durante a solicitação de exclusão, tente novamente mais tarde ou contate um suporte.',
+					'error'
+				)
+				console.error(err)
+			})
 	}
 
 	const customCloseModal = () => {
@@ -128,19 +159,18 @@ export default function CreateConference() {
 					padding="10px"
 				>
 					<Heading fontSize="32px" m="20px" paddingTop="20px">
-						Confêrencias cadastradas
+						Conferências cadastradas
 					</Heading>
 					<CustomList
 						callBackEdit={customOpenEditModal}
+						callBackDelete={handlerDeleteConference}
 						callBackNew={customOpenNewModal}
 						isLoading={isLoading}
-						data={customData?.map((item) => {
-							return {
-								name: item.description,
-								avatarLink: item.link_avatar,
-								description: item.about,
-							}
-						})}
+						data={customData?.map((item) => ({
+							name: item.description,
+							avatarLink: item.link_avatar,
+							description: item.about,
+						}))}
 						typeList="avatar-card"
 					/>
 				</Box>

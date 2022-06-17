@@ -1,16 +1,13 @@
-import React from 'react'
-import { AiOutlineSearch } from 'react-icons/ai'
+import React, { useState } from 'react'
 import { IoAddCircleOutline } from 'react-icons/io5'
 
 import {
 	Box,
-	Button,
+	Text,
 	Divider,
 	Flex,
 	IconButton,
 	Input,
-	InputGroup,
-	InputRightElement,
 	SimpleGrid,
 	Skeleton,
 	Stack,
@@ -19,7 +16,8 @@ import {
 import { AvatarCard, TypeAvatarCardData } from './subComponents/AvatarCard'
 
 type TypeParams = {
-	callBackEdit: any
+	callBackEdit?: any
+	callBackDelete?: any
 	callBackNew?: any
 	typeList: 'avatar-card'
 	data: TypeAvatarCardData[]
@@ -28,11 +26,13 @@ type TypeParams = {
 
 const CustomList = ({
 	callBackEdit,
+	callBackDelete,
 	callBackNew,
 	typeList,
 	data,
 	isLoading,
 }: TypeParams) => {
+	const [searchText, setSearchText] = useState('')
 	const loadList = () => {
 		if (isLoading)
 			return (
@@ -43,28 +43,46 @@ const CustomList = ({
 				</Stack>
 			)
 
-		if (!data?.length) return []
+		if (!data?.length)
+			return (
+				<Text fontSize="xl" w="100%" textAlign="center" p="20px">
+					Nenhum registro encontrado
+				</Text>
+			)
 
 		return (
-			<SimpleGrid columns={[1, 1, 3]} spacing="20px" padding="30px 30px">
-				{data.map((item, index) => {
-					switch (typeList) {
-						case 'avatar-card':
-							return (
-								<AvatarCard
-									key={index}
-									data={{
-										name: item.name,
-										avatarLink: item.avatarLink,
-										description: item.description,
-									}}
-									callBackEdit={() => {
-										callBackEdit(index)
-									}}
-								/>
-							)
-					}
-				})}
+			<SimpleGrid
+				columns={[1, 1, 2, 3]}
+				spacing="20px"
+				padding="30px 30px"
+			>
+				{data
+					.filter((item) =>
+						item?.name
+							?.toLocaleLowerCase()
+							.includes(searchText?.toLocaleLowerCase())
+					)
+					.map((item, index) => {
+						switch (typeList) {
+							case 'avatar-card':
+								return (
+									<AvatarCard
+										key={index}
+										data={{
+											name: item.name,
+											avatarLink: item.avatarLink,
+											description: item.description,
+										}}
+										callBackEdit={() => {
+											callBackEdit(index)
+										}}
+										callBackDelete={() => {
+											callBackDelete(index)
+										}}
+									/>
+								)
+						}
+					})}
 			</SimpleGrid>
 		)
 	}
@@ -82,36 +100,28 @@ const CustomList = ({
 				gap="3"
 			>
 				<Box alignItems="center" w="100%">
-					<InputGroup size="lg" w="100%">
-						<Input
-							pr="4.5rem"
-							w="100%"
-							type="text"
-							placeholder="Pesquisar..."
-						/>
-						<InputRightElement>
-							<IconButton
-							bg="#0B6051"
-							title='Novo'
-							colorScheme="green"
-								aria-label="Search database"
-								icon={<AiOutlineSearch />}
-							/>
-						</InputRightElement>
-					</InputGroup>
+					<Input
+						pr="4.5rem"
+						w="100%"
+						size="lg"
+						onChange={({ target: { value } }) =>
+							setSearchText(value)
+						}
+						type="text"
+						placeholder="Pesquisar pelo nome..."
+					/>
 				</Box>
+
 				{callBackNew !== undefined && (
-					<Box alignItems="center" w="10%">
-						<IconButton
-							bg="#FFC632"
-							title='Novo'
-							colorScheme="yellow"
-							fontSize="23px"
-							aria-label="Search database"
-							onClick={callBackNew}
-							icon={<IoAddCircleOutline />}
-						/>
-					</Box>
+					<IconButton
+						bg="#FFC632"
+						title="Novo"
+						colorScheme="yellow"
+						fontSize="23px"
+						aria-label="Search database"
+						onClick={callBackNew}
+						icon={<IoAddCircleOutline />}
+					/>
 				)}
 			</Flex>
 			<Divider w="80%" m="0 auto" />
