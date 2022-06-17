@@ -22,6 +22,7 @@ import Header from '../components/Header'
 
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import CustomList from '../components/CustomList'
 
 const schema = yup
 	.object({
@@ -41,6 +42,17 @@ type SignInFormData = {
 
 export default function CreateConference() {
 	const { isOpen, onOpen, onClose } = useDisclosure()
+	const customData = [
+		{
+			description: 'Teste de conferencia',
+			link_avatar:
+				'https://styles.redditmedia.com/t5_2sxwj/styles/communityIcon_4i2mjfjiqlb11.jpg',
+			about: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.",
+			title_address: 'Teste Title Address',
+			address: 'Teste Address',
+			opening_hours: '08:30;12:00;14:00;18:00',
+		},
+	]
 	const handleSignIn: SubmitHandler<SignInFormData> = async (e) => {
 		await new Promise((resolve) => setTimeout(resolve, 2000))
 		console.log('TCL: handleSignIn -> e', e)
@@ -49,6 +61,13 @@ export default function CreateConference() {
 	const { handleSubmit } = useForm({
 		// resolver: yupResolver(schema),
 	})
+
+	const customOpenModal = (index: number) => {
+		alert(`Teste com index: ${index}`)
+
+		const item = customData[index]
+		console.log("Item => ", item)
+	}
 	return (
 		<>
 			<Box w="100%" minHeight="100vh" bg="#E5E5E5">
@@ -56,14 +75,24 @@ export default function CreateConference() {
 
 				<Box
 					w="100%"
-					maxW="1050px"
+					maxW={{ base: '100%', md: '1150px' }}
 					bg="#FFFFFF"
 					margin="0 auto"
 					mt="-50px"
 					borderRadius="8px"
 					padding="10px"
 				>
-					<Button onClick={onOpen}>Open Modal</Button>
+					<CustomList
+						callBackEdit={customOpenModal}
+						data={customData.map((item) => {
+							return {
+								name: item.description,
+								avatarLink: item.link_avatar,
+								description: item.about,
+							}
+						})}
+						typeList="avatar-card"
+					></CustomList>
 				</Box>
 			</Box>
 
@@ -129,7 +158,7 @@ export default function CreateConference() {
 								<Box
 									w={{ base: '100%', md: '32%' }}
 									display="inline-block"
-									marginTop='20px'
+									marginTop="20px"
 								>
 									<Text>Titulo do endereço</Text>
 									<Input
@@ -142,7 +171,7 @@ export default function CreateConference() {
 								<Box
 									w={{ base: '100%', md: '32%' }}
 									display="inline-block"
-									marginTop='20px'
+									marginTop="20px"
 								>
 									<Text>Endereço</Text>
 									<Input
@@ -155,7 +184,7 @@ export default function CreateConference() {
 								<Box
 									w={{ base: '100%', md: '32%' }}
 									display="inline-block"
-									marginTop='20px'
+									marginTop="20px"
 								>
 									<Text>Número</Text>
 									<NumberInput>
