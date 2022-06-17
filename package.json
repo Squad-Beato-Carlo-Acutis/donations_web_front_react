@@ -10,6 +10,7 @@
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
     "@hookform/resolvers": "^2.9.0",
+    "axios": "^0.27.2",
     "date-fns": "^2.11.1",
     "framer-motion": "^6",
     "gray-matter": "^4.0.2",
@@ -20,6 +21,7 @@
     "react-icons": "^4.4.0",
     "remark": "^14.0.1",
     "remark-html": "^15.0.0",
+    "sweetalert2": "^11.4.17",
     "yup": "^0.32.11"
   },
   "devDependencies": {
