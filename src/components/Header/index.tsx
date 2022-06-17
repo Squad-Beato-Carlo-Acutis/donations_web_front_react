@@ -13,9 +13,9 @@ const Header: React.FC = () => (
 			<Image src={Logo} />
 		</Box>
 		<Flex alignItems="center" gap="12" padding="16">
-			<Button bg="#FFC632" colorScheme="yellow" size="lg">
+			{/* <Button bg="#FFC632" colorScheme="yellow" size="lg">
 				Adicionar Produto
-			</Button>
+			</Button> */}
 			<WrapItem>
 				<Avatar
 					size="md"
