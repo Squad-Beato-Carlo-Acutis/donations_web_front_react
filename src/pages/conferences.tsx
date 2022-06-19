@@ -29,6 +29,7 @@ import {
 	updateConference,
 } from '../repository/donationsApi/conferences'
 import Swal from 'sweetalert2'
+import { checkSession } from '../repository/donationsApi/login'
 
 const schema = yup
 	.object({
@@ -41,7 +42,7 @@ const schema = yup
 	})
 	.required()
 
-export default function CreateConference() {
+export default function Conferences() {
 	const { isOpen, onOpen, onClose } = useDisclosure()
 	const { register, handleSubmit, setValue, reset } = useForm({
 		resolver: yupResolver(schema),
@@ -64,6 +65,8 @@ export default function CreateConference() {
 	}
 
 	useEffect(() => {
+		if (!checkSession()) window.location.href = '/admin'
+
 		getData()
 	}, [])
 
@@ -72,9 +75,9 @@ export default function CreateConference() {
 	) => {
 		try {
 			if (isNewConference) {
-				await createConference(1, conference)
+				await createConference(conference)
 			} else {
-				await updateConference(1, conference, conference.id)
+				await updateConference(conference, conference.id)
 			}
 
 			Swal.fire(
@@ -106,7 +109,7 @@ export default function CreateConference() {
 			.then((result) => {
 				if (result.isDenied) {
 					const { id } = customData[index]
-					deleteConference(1, id)
+					deleteConference(id)
 					getData()
 					Swal.fire(
 						'Conferência deletada com sucesso!',
