@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext } from 'react'
 
 import Image from 'next/image'
 import { Avatar, Box, Button, Flex, WrapItem } from '@chakra-ui/react'
@@ -6,9 +6,10 @@ import { Avatar, Box, Button, Flex, WrapItem } from '@chakra-ui/react'
 import Logo from '../../../public/assets/images/logo/Donating.png'
 import { AiOutlineLogout } from 'react-icons/ai'
 import Swal from 'sweetalert2'
-import { logout } from '../../../src/repository/donationsApi/login'
+import { AuthContext } from '../../context/AuthContext'
 
 const Header = () => {
+	const { signOut } = useContext(AuthContext)
 	const handleLogout = () => {
 		Swal.fire({
 			title: 'Atenção!!!',
@@ -19,7 +20,7 @@ const Header = () => {
 			denyButtonText: `Sim`,
 		}).then((result) => {
 			if (result.isDenied) {
-				logout()
+				signOut()
 			}
 		})
 	}

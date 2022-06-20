@@ -29,7 +29,9 @@ import {
 	updateConference,
 } from '../repository/donationsApi/conferences'
 import Swal from 'sweetalert2'
-import { checkSession } from '../repository/donationsApi/login'
+import { GetServerSideProps } from 'next'
+import { parseCookies } from 'nookies'
+import { MAIN_ADMIN_LOGIN_ROUTE, TOKEN_COOKIE_NAME } from '../helpers/varables'
 
 const schema = yup
 	.object({
@@ -65,8 +67,6 @@ export default function Conferences() {
 	}
 
 	useEffect(() => {
-		if (!checkSession()) window.location.href = '/admin'
-
 		getData()
 	}, [])
 
@@ -327,4 +327,23 @@ export default function Conferences() {
 			</Modal>
 		</>
 	)
+}
+
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+	const cookie = parseCookies(ctx)
+		const token = cookie[TOKEN_COOKIE_NAME]
+
+	if (!token) {
+		return {
+			redirect: {
+				destination: MAIN_ADMIN_LOGIN_ROUTE,
+				permanent: false
+			}
+		}
+	}
+
+	return {
+		props: {}
+	}
 }
