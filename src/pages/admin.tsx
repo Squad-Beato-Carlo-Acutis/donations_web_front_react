@@ -16,9 +16,12 @@ import Input from '../components/Form/Input'
 
 import VolunteersImage from '../../public/assets/images/team-of-volunteers-stacking-hands.jpg'
 import Logo from '../../public/assets/images/logo/Donating.png'
-import { checkSession, login } from '../repository/donationsApi/login'
 import Swal from 'sweetalert2'
-import { useEffect } from 'react'
+import { useContext } from 'react'
+import { AuthContext } from '../context/AuthContext'
+import { GetServerSideProps } from 'next'
+import { parseCookies } from 'nookies'
+import { TOKEN_COOKIE_NAME } from '../helpers/varables'
 
 type SignInFormData = {
 	email: string
@@ -34,17 +37,14 @@ const schema = yup
 	.required()
 
 export default function Admin() {
-	useEffect(() => {
-		if (checkSession()) window.location.href = '/conferences'
-	}, [])
+	const { signIn } = useContext(AuthContext)
 
 	const handleSignIn: SubmitHandler<SignInFormData> = async (values) => {
 		try {
-			const isLogged = await login(values.email, values.password)
-
-			if (!isLogged) {
-				Swal.fire('Ops', 'Usuário ou senha estão inválidos.', 'warning')
-			}
+			await signIn({
+				email: values.email,
+				pws: values.password,
+			})
 		} catch (err) {
 			Swal.fire(
 				'Erro',
@@ -143,4 +143,22 @@ export default function Admin() {
 			/>
 		</SimpleGrid>
 	)
+}
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+	const cookie = parseCookies(ctx)
+		const token = cookie[TOKEN_COOKIE_NAME]
+
+	if (token) {
+		return {
+			redirect: {
+				destination: '/conferences',
+				permanent: false
+			}
+		}
+	}
+
+	return {
+		props: {}
+	}
 }
