@@ -32,6 +32,7 @@ import Swal from 'sweetalert2'
 import { GetServerSideProps } from 'next'
 import { parseCookies } from 'nookies'
 import { MAIN_ADMIN_LOGIN_ROUTE, TOKEN_COOKIE_NAME } from '../helpers/varables'
+import { Pagination } from '../components/Pagination'
 
 const schema = yup
 	.object({
@@ -52,13 +53,19 @@ export default function Conferences() {
 	const [customData, setCustomData] = useState<CadConferenceFormData[]>()
 	const [isLoading, setIsLoading] = useState(true)
 	const [isNewConference, setIsNewConference] = useState(false)
+	const [totalPages, setTotalPages] = useState(0)
+	const [currentPage, setCurrentPage] = useState(1)
+	const [dataLimit, setDataLimit] = useState(10)
 
 	const getData = async () => {
 		try {
 			setIsLoading(true)
-			const dataConferences: CadConferenceFormData[] =
-				await getConferences()
-			setCustomData(dataConferences)
+			const { data, totalPages: pTotalPages } = await getConferences(
+				dataLimit,
+				currentPage
+			)
+			setTotalPages(pTotalPages)
+			setCustomData(data)
 			setIsLoading(false)
 		} catch (err) {
 			console.error(err)
@@ -68,7 +75,7 @@ export default function Conferences() {
 
 	useEffect(() => {
 		getData()
-	}, [])
+	}, [currentPage, dataLimit])
 
 	const hadlerSendForm: SubmitHandler<CadConferenceFormData> = async (
 		conference: CadConferenceFormData
@@ -175,6 +182,13 @@ export default function Conferences() {
 							description: item.about,
 						}))}
 						typeList="avatar-card"
+					/>
+					<Pagination
+						pCurrentPage={1}
+						totalPages={totalPages}
+						dataLimit={dataLimit}
+						callBackDataLimit={setDataLimit}
+						callBackPage={setCurrentPage}
 					/>
 				</Box>
 			</Box>
@@ -329,21 +343,20 @@ export default function Conferences() {
 	)
 }
 
-
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
 	const cookie = parseCookies(ctx)
-		const token = cookie[TOKEN_COOKIE_NAME]
+	const token = cookie[TOKEN_COOKIE_NAME]
 
 	if (!token) {
 		return {
 			redirect: {
 				destination: MAIN_ADMIN_LOGIN_ROUTE,
-				permanent: false
-			}
+				permanent: false,
+			},
 		}
 	}
 
 	return {
-		props: {}
+		props: {},
 	}
 }

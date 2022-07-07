@@ -33,10 +33,8 @@ const schema = yup
 export default function Home() {
 
 	const handleSignIn: SubmitHandler<SignInFormData> =  async (values) => {
-      
+
 		await new Promise(resolve => setTimeout(resolve, 2000))
-  
-		console.log(values)
 	}
 
 	const {
@@ -46,7 +44,6 @@ export default function Home() {
 	} = useForm({
 		resolver: yupResolver(schema),
 	})
-	const onSubmit = (data) => console.log(data)
 
 	return (
 		<SimpleGrid h="100vh" w="100vw" columns={2}>
@@ -94,7 +91,7 @@ export default function Home() {
 										},
 									})} />
 							<Input
-								type="password"												
+								type="password"
 								name="password"
 								label="Senha"
 								placeholder="Digite sua senha"
@@ -116,7 +113,7 @@ export default function Home() {
 								colorScheme="yellow"
 								size="lg"
 								isLoading={formState.isSubmitting}
-								
+
 							>
 								Entrar
 							</Button>

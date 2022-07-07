@@ -10,10 +10,33 @@ export type CadConferenceFormData = {
 	opening_hours: string
 }
 
-export const getConferences = async (): Promise<CadConferenceFormData[]> => {
-	const { data } = await ApiDonationsWeb.get(`/api/v1/conferences`)
+type TypeGetAllConferences = {
+	data: CadConferenceFormData[]
+	totalPages: number
+}
 
-	return data
+export const getConferences = async (
+	pLimit?: number,
+	pPage?: number
+): Promise<TypeGetAllConferences> => {
+	const limit = pLimit ? `limit=${pLimit}` : ''
+	const page = pPage ? `page=${pPage}` : ''
+
+	let query = `${pLimit || pPage ? '?' : ''}`
+
+	if (limit) {
+		query += limit
+		query += page ? `&${page}` : ''
+	} else if (page) {
+		query += page
+	}
+
+	const { data: conferences } =
+		await ApiDonationsWeb.get<TypeGetAllConferences>(
+			`/api/v1/conferences${query}`
+		)
+
+	return conferences
 }
 
 export const createConference = async (conference: CadConferenceFormData) => {
