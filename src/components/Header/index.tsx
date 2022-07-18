@@ -23,11 +23,46 @@ import Logo from '../../../public/assets/images/logo/Donating.png'
 import { GiHamburgerMenu } from 'react-icons/gi'
 import Swal from 'sweetalert2'
 import { AuthContext } from '../../context/AuthContext'
-import { CustomMenuButton } from './CustomMenuButton/CustomMenuButton'
+import {
+	CustomMenuButton,
+} from './CustomMenuButton/CustomMenuButton'
+import { useRouter } from 'next/router'
 
 const Header = () => {
+	const router = useRouter()
 	const { signOut } = useContext(AuthContext)
 	const { isOpen, onOpen, onClose } = useDisclosure()
+
+	const getButtonsMenu = () => {
+		return (
+			<>
+				<CustomMenuButton
+					active={router.pathname === '/admin/home'}
+					title="Home"
+				/>
+				<CustomMenuButton
+					active={router.pathname === '/admin/conferences'}
+					title="Conferências"
+				/>
+				<CustomMenuButton
+					active={router.pathname === '/admin/product'}
+					title="Produtos"
+				/>
+				<CustomMenuButton
+					active={router.pathname === '/admin/basicbaskets'}
+					title="Cestas Básicas"
+				/>
+				<CustomMenuButton
+					active={router.pathname === '/admin/productsneeded'}
+					title="Produtos Necessários"
+				/>
+				<CustomMenuButton
+					active={router.pathname === '/admin/movements'}
+					title="Mov. Estoque"
+				/>
+			</>
+		)
+	}
 
 	const handleLogout = () => {
 		Swal.fire({
@@ -55,41 +90,35 @@ const Header = () => {
 			<Box
 				alignItems="center"
 				gap="12"
-				display={['none', 'none', 'block', 'block']}
+				display={['none', 'none', 'none', 'block']}
 			>
 				<Image src={Logo} />
 			</Box>
 			<Flex
 				justifyContent={'left'}
 				width={'100%'}
-				gap={'9px'}
-				display={['none', 'none', 'block', 'block']}
+				gap={'12px'}
+				display={['none', 'none', 'none', 'flex']}
 			>
-				<CustomMenuButton>Teste 1</CustomMenuButton>
-				<CustomMenuButton>Teste 2</CustomMenuButton>
-				<CustomMenuButton>Teste 3</CustomMenuButton>
-				<CustomMenuButton>Teste 4</CustomMenuButton>
-				<CustomMenuButton>Teste 5</CustomMenuButton>
+				{getButtonsMenu()}
 			</Flex>
-			<Box display={['block', 'block', 'none', 'none']}>
-				<GiHamburgerMenu onClick={onOpen} />
+			<Box display={['block', 'block', 'block', 'none']}>
+				<GiHamburgerMenu fontSize={30} color="#FFF" onClick={onOpen} />
 			</Box>
 			<Drawer placement={'left'} onClose={onClose} isOpen={isOpen}>
 				<DrawerOverlay />
 				<DrawerContent>
-					<DrawerHeader borderBottomWidth="1px">
-						Basic Drawer
+					<DrawerHeader borderBottomWidth="1px" textAlign={"center"}>
+						Menu
 					</DrawerHeader>
-					<DrawerBody>
-						<p>Some contents...</p>
-						<p>Some contents...</p>
-						<p>Some contents...</p>
+					<DrawerBody gap={3} display="flex" flexDirection={"column"} padding="15px 0px">
+						{getButtonsMenu()}
 					</DrawerBody>
 				</DrawerContent>
 			</Drawer>
 			<Flex alignItems="center" gap="12">
 				<Menu>
-					<MenuButton as={'circle'}>
+					<MenuButton as={'a'}>
 						<Avatar
 							size="md"
 							name="Kola Tioluwani"

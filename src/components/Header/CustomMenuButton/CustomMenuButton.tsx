@@ -1,14 +1,25 @@
 import { background, Button } from '@chakra-ui/react'
 
-export const CustomMenuButton = ({ children }) => {
+export const CustomMenuButton = ({ title, active = false }) => {
 	return (
 		<Button
-			color={'#fff'}
-			background={'transparent'}
-			_hover={{ bg: '#0B6051' }}
-			_active={{ bg: '#0B6051' }}
+			color={[
+				`${active ? '#FFF' : '#000'}`,
+				`${active ? '#FFF' : '#000'}`,
+				`${active ? '#FFF' : '#000'}`,
+				`#FFF`,
+			]}
+			background={[
+				`${active ? '#0B6051' : '#f3f3f3'}`,
+				`${active ? '#0B6051' : '#f3f3f3'}`,
+				`${active ? '#0B6051' : '#f3f3f3'}`,
+				`${active ? '#0B6051' : 'transparent'}`,
+			]}
+			_hover={{ bg: '#0B6051', color: '#FFF' }}
+			width={['100%', '100%', '100%', 'initial']}
+			borderRadius={['0px', '0px', '0px', '7px']}
 		>
-			{children}
+			{title}
 		</Button>
 	)
 }

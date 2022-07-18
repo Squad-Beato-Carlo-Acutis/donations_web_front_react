@@ -2,58 +2,65 @@ import { Flex, Avatar, Box, IconButton, Text } from '@chakra-ui/react'
 import { MdEdit } from 'react-icons/md'
 import { BsFillTrashFill } from 'react-icons/bs'
 
-export type TypeAvatarCardData = {
+export type TypeBoxCardData = {
 	name: string
 	description?: string
 	avatarLink: string
 }
 
-export type TypeAvatarCardParams = {
-	data: TypeAvatarCardData
+export type TypeBoxCardParams = {
+	data: TypeBoxCardData
 	callBackEdit?: any
 	callBackDelete?: any
 }
 
-export const AvatarCard = ({
+export const BoxCard = ({
 	data: { name, description, avatarLink },
 	callBackEdit,
 	callBackDelete,
-}: TypeAvatarCardParams) => {
+}: TypeBoxCardParams) => {
 	return (
 		<Flex
-			flexDirection="row"
+			flexDirection="column"
 			alignItems="center"
+			justifyContent={"center"}
 			borderRadius="5px"
 			boxShadow="rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;"
 			padding="10px"
-			minW="300px"
+			maxW="250px"
+			gap={3}
 		>
-			<Flex w="100%">
-				<Avatar src={avatarLink} />
-				<Box ml="3">
+			<Avatar
+				src={avatarLink}
+				w={'80px'}
+				h={'80px'}
+				boxShadow="rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;"
+			/>
+			<Box ml="3">
+				<Text
+					fontWeight="bold"
+					textOverflow="ellipsis"
+					overflow="hidden"
+					whiteSpace="nowrap"
+					textAlign={"center"}
+					// w="170px"
+				>
+					{name}
+				</Text>
+				{description && (
 					<Text
-						fontWeight="bold"
+						fontSize="sm"
 						textOverflow="ellipsis"
 						overflow="hidden"
 						whiteSpace="nowrap"
-						w="170px"
+						textAlign={"center"}
+						w="150px"
 					>
-						{name}
+						{description}
 					</Text>
-					{description && (
-						<Text
-							fontSize="sm"
-							textOverflow="ellipsis"
-							overflow="hidden"
-							whiteSpace="nowrap"
-							w="150px"
-						>
-							{description}
-						</Text>
-					)}
-				</Box>
-			</Flex>
-			<Flex flexDirection="column" gap="2" alignItems="center">
+				)}
+			</Box>
+			<Flex flexDirection="row" gap="2" alignItems="center">
 				{callBackEdit !== undefined && (
 					<IconButton
 						bg="#FFC632"
@@ -61,10 +68,10 @@ export const AvatarCard = ({
 						aria-label="Call Sage"
 						fontSize="15px"
 						title="Editar"
-						h="25px"
-						minW="25px"
+						h="35px"
+						minW="35px"
 						onClick={callBackEdit}
-						icon={<MdEdit />}
+						icon={<MdEdit fontSize={20} />}
 					/>
 				)}
 				{callBackDelete !== undefined && (
@@ -74,10 +81,10 @@ export const AvatarCard = ({
 						aria-label="Call Sage"
 						fontSize="15px"
 						title="Deletar"
-						h="25px"
-						minW="25px"
+						h="35px"
+						minW="35px"
 						onClick={callBackDelete}
-						icon={<BsFillTrashFill />}
+						icon={<BsFillTrashFill fontSize={20} />}
 					/>
 				)}
 			</Flex>

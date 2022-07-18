@@ -21,7 +21,7 @@ import { useContext } from 'react'
 import { AuthContext } from '../context/AuthContext'
 import { GetServerSideProps } from 'next'
 import { parseCookies } from 'nookies'
-import { TOKEN_COOKIE_NAME } from '../helpers/varables'
+import { ADMIN_HOME_MAIN_ROUTE, TOKEN_COOKIE_NAME } from '../helpers/varables'
 
 type SignInFormData = {
 	email: string
@@ -152,7 +152,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 	if (token) {
 		return {
 			redirect: {
-				destination: '/conferences',
+				destination: ADMIN_HOME_MAIN_ROUTE,
 				permanent: false
 			}
 		}

@@ -15,11 +15,11 @@ import {
 	Heading,
 } from '@chakra-ui/react'
 import { SubmitHandler, useForm } from 'react-hook-form'
-import Header from '../components/Header'
+import Header from '../../components/Header'
 
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import CustomList from '../components/CustomList'
+import CustomList from '../../components/CustomList'
 import { useEffect, useState } from 'react'
 import {
 	CadConferenceFormData,
@@ -27,12 +27,12 @@ import {
 	deleteConference,
 	getConferences,
 	updateConference,
-} from '../repository/donationsApi/conferences'
+} from '../../repository/donationsApi/conferences'
 import Swal from 'sweetalert2'
 import { GetServerSideProps } from 'next'
 import { parseCookies } from 'nookies'
-import { MAIN_ADMIN_LOGIN_ROUTE, TOKEN_COOKIE_NAME } from '../helpers/varables'
-import { Pagination } from '../components/Pagination'
+import { MAIN_ADMIN_LOGIN_ROUTE, TOKEN_COOKIE_NAME } from '../../helpers/varables'
+import { Pagination } from '../../components/Pagination'
 
 const schema = yup
 	.object({

@@ -14,12 +14,13 @@ import {
 } from '@chakra-ui/react'
 
 import { AvatarCard, TypeAvatarCardData } from './subComponents/AvatarCard'
+import { BoxCard } from './subComponents/BoxCard'
 
 type TypeParams = {
 	callBackEdit?: any
 	callBackDelete?: any
 	callBackNew?: any
-	typeList: 'avatar-card'
+	typeList: 'avatar-card' | 'box-card'
 	data: TypeAvatarCardData[]
 	isLoading?: boolean
 }
@@ -67,6 +68,23 @@ const CustomList = ({
 							case 'avatar-card':
 								return (
 									<AvatarCard
+										key={index}
+										data={{
+											name: item.name,
+											avatarLink: item.avatarLink,
+											description: item.description,
+										}}
+										callBackEdit={() => {
+											callBackEdit(index)
+										}}
+										callBackDelete={() => {
+											callBackDelete(index)
+										}}
+									/>
+								)
+							case 'box-card':
+								return (
+									<BoxCard
 										key={index}
 										data={{
 											name: item.name,
