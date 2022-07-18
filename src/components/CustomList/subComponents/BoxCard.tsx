@@ -1,4 +1,4 @@
-import { Flex, Avatar, Box, IconButton, Text } from '@chakra-ui/react'
+import { Flex, Box, IconButton, Text, Img } from '@chakra-ui/react'
 import { MdEdit } from 'react-icons/md'
 import { BsFillTrashFill } from 'react-icons/bs'
 
@@ -27,13 +27,15 @@ export const BoxCard = ({
 			borderRadius="5px"
 			boxShadow="rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;"
 			padding="10px"
-			maxW="250px"
+			maxW="220px"
 			gap={3}
 		>
-			<Avatar
+			<Img
 				src={avatarLink}
+				objectFit="contain"
 				w={'80px'}
 				h={'80px'}
+				borderRadius="100%"
 				boxShadow="rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;"
 			/>
 			<Box ml="3">

@@ -23,6 +23,7 @@ type TypeParams = {
 	typeList: 'avatar-card' | 'box-card'
 	data: TypeAvatarCardData[]
 	isLoading?: boolean
+	colums?: Array<number>
 }
 
 const CustomList = ({
@@ -32,6 +33,7 @@ const CustomList = ({
 	typeList,
 	data,
 	isLoading,
+	colums = [1, 1, 2, 3]
 }: TypeParams) => {
 	const [searchText, setSearchText] = useState('')
 	const loadList = () => {
@@ -53,9 +55,10 @@ const CustomList = ({
 
 		return (
 			<SimpleGrid
-				columns={[1, 1, 2, 3]}
+				columns={colums}
 				spacing="20px"
 				padding="30px 30px"
+				justifyItems={"center"}
 			>
 				{data
 					.filter((item) =>

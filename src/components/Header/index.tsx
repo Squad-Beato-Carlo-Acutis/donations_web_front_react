@@ -26,7 +26,7 @@ import { AuthContext } from '../../context/AuthContext'
 import {
 	CustomMenuButton,
 } from './CustomMenuButton/CustomMenuButton'
-import { useRouter } from 'next/router'
+import Router, { useRouter } from 'next/router'
 
 const Header = () => {
 	const router = useRouter()
@@ -38,26 +38,32 @@ const Header = () => {
 			<>
 				<CustomMenuButton
 					active={router.pathname === '/admin/home'}
+					onClick={() => window.location.href = '/admin/home'}
 					title="Home"
 				/>
 				<CustomMenuButton
 					active={router.pathname === '/admin/conferences'}
+					onClick={() => window.location.href = '/admin/conferences'}
 					title="Conferências"
 				/>
 				<CustomMenuButton
 					active={router.pathname === '/admin/product'}
+					onClick={() => window.location.href = '/admin/product'}
 					title="Produtos"
 				/>
 				<CustomMenuButton
 					active={router.pathname === '/admin/basicbaskets'}
+					onClick={() => window.location.href = '/admin/basicbaskets'}
 					title="Cestas Básicas"
 				/>
 				<CustomMenuButton
 					active={router.pathname === '/admin/productsneeded'}
+					onClick={() => window.location.href = '/admin/productsneeded'}
 					title="Produtos Necessários"
 				/>
 				<CustomMenuButton
 					active={router.pathname === '/admin/movements'}
+					onClick={() => window.location.href = '/admin/movements'}
 					title="Mov. Estoque"
 				/>
 			</>

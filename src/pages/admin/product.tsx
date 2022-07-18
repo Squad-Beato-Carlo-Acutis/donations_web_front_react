@@ -1,5 +1,4 @@
 import {
-	Flex,
 	Box,
 	Text,
 	Input,
@@ -13,9 +12,13 @@ import {
 	ModalFooter,
 	useDisclosure,
 	Heading,
+	Select,
+	Img,
 } from '@chakra-ui/react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import Header from '../../components/Header'
+
+import { BiImage } from 'react-icons/bi'
 
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -33,25 +36,27 @@ import {
 	CadProductFormData,
 	createProduct,
 	deleteProduct,
+	getCategories,
+	getMeasures,
 	getProducts,
+	TypeCategory,
+	TypeMeasure,
 	updateProduct,
+	uploadProductImage,
 } from '../../repository/donationsApi/products'
 import { getImageLinkApi } from '../../helpers/utils'
 
 const schema = yup
 	.object({
 		description: yup.string().required(),
-		link_avatar: yup.string().url().required(),
-		about: yup.string().required(),
-		title_address: yup.string().required(),
-		address: yup.string().required(),
-		opening_hours: yup.string().required(),
+		tb_measure_id: yup.number().required(),
+		tb_category_id: yup.number().required(),
 	})
 	.required()
 
 export default function Product() {
 	const { isOpen, onOpen, onClose } = useDisclosure()
-	const { register, handleSubmit, setValue, reset } = useForm({
+	const { register, handleSubmit, setValue, reset, getValues } = useForm({
 		resolver: yupResolver(schema),
 	})
 	const [customData, setCustomData] = useState<CadProductFormData[]>()
@@ -60,6 +65,9 @@ export default function Product() {
 	const [totalPages, setTotalPages] = useState(0)
 	const [currentPage, setCurrentPage] = useState(1)
 	const [dataLimit, setDataLimit] = useState(10)
+
+	const [measures, setMeasures] = useState<TypeMeasure[]>()
+	const [categories, setCategories] = useState<TypeCategory[]>()
 
 	const getData = async () => {
 		try {
@@ -70,6 +78,13 @@ export default function Product() {
 			)
 			setTotalPages(pTotalPages)
 			setCustomData(data)
+
+			const dataMeasures = await getMeasures()
+			setMeasures(dataMeasures)
+
+			const dataCategories = await getCategories()
+			setCategories(dataCategories)
+
 			setIsLoading(false)
 		} catch (err) {
 			console.error(err)
@@ -82,13 +97,29 @@ export default function Product() {
 	}, [currentPage, dataLimit])
 
 	const hadlerSendForm: SubmitHandler<CadProductFormData> = async (
-		product: CadProductFormData
+		product: any
 	) => {
 		try {
+			let dataProduct: any = {}
 			if (isNewProduct) {
-				await createProduct(product)
+				dataProduct = await createProduct({
+					description: product.description,
+					tb_category_id: product.tb_category_id,
+					tb_measure_id: product.tb_measure_id,
+				})
 			} else {
-				await updateProduct(product, product.id)
+				dataProduct = await updateProduct(
+					{
+						description: product.description,
+						tb_category_id: product.tb_category_id,
+						tb_measure_id: product.tb_measure_id,
+					},
+					product.id
+				)
+			}
+
+			if (product.product_img && dataProduct.id) {
+				await uploadProductImage(dataProduct.id, product.product_img[0])
 			}
 
 			Swal.fire(
@@ -176,6 +207,7 @@ export default function Product() {
 						callBackDelete={handlerDeleteProduct}
 						callBackNew={customOpenNewModal}
 						isLoading={isLoading}
+						colums={[1, 2, 3, 4]}
 						data={customData?.map((item) => ({
 							name: item.description,
 							description: `Unidade: ${item.measure?.description}`,
@@ -220,96 +252,98 @@ export default function Product() {
 								</Box>
 							)}
 							<Box display="flex">
-								<Box
-									h="70px"
-									margin="0 20px"
-									mt="22px"
-									w="100%"
-								>
-									<Text>Nome da produto</Text>
+								<Box h="70px" margin="22px 20px" w="100%">
+									<Text>Nome do produto</Text>
 									<Input
 										type="text"
-										placeholder="Nome"
+										placeholder="Ex: Arroz, Feijão..."
 										{...register('description')}
 										w="100%"
 										h="56px"
 										mt="4px"
 									></Input>
 								</Box>
+							</Box>
+							<Box display="flex">
+								<Box h="70px" margin="22px 20px" w="100%">
+									<Text>Categoria</Text>
+									<Select
+										{...register('tb_category_id')}
+										w="100%"
+										h="56px"
+										mt="4px"
+									>
+										{categories?.map((category) => {
+											return (
+												<option
+													key={`${category.id}-${category.description}`}
+													value={category.id}
+												>
+													{category.description}
+												</option>
+											)
+										})}
+									</Select>
+								</Box>
 								<Box
 									h="70px"
 									margin="0 20px"
 									mt="22px"
 									w="100%"
 								>
-									<Text>Link do Avatar</Text>
-									<Input
-										placeholder="Ex: www.bancodeimagens.com"
-										{...register('link_avatar')}
+									<Text>Unidade de Medida</Text>
+									<Select
+										{...register('tb_measure_id')}
 										w="100%"
 										h="56px"
 										mt="4px"
-									></Input>
+									>
+										{measures?.map((measure) => {
+											return (
+												<option
+													key={`${measure.id}-${measure.description}`}
+													value={measure.id}
+												>
+													{measure.description}
+												</option>
+											)
+										})}
+									</Select>
 								</Box>
 							</Box>
-
-							<Box margin="0 20px" mt="40px">
-								<Text>Sobre</Text>
-								<Input
-									placeholder="Ex: Descreva um pouco sobre a produto..."
-									{...register('about')}
-									textAlign="start"
-									paddingBottom="98px"
-									w="100%"
-									h="150px"
-								></Input>
-							</Box>
-
-							<Flex
-								flexDirection={{ base: 'column', md: 'row' }}
-								justifyContent="space-between"
-								alignItems="center"
-								margin={{ base: '0 20px' }}
-							>
-								<Box
-									w={{ base: '100%', md: '49%' }}
-									display="inline-block"
-									marginTop="20px"
-								>
-									<Text>Titulo do endereço</Text>
-									<Input
-										placeholder="Ex: Paroquia Nossa Senhora"
-										{...register('title_address')}
-										w="100%"
-										h="56px"
-									></Input>
-								</Box>
-								<Box
-									w={{ base: '100%', md: '49%' }}
-									display="inline-block"
-									marginTop="20px"
-								>
-									<Text>Endereço</Text>
-									<Input
-										placeholder="Ex: Av José e Maria"
-										{...register('address')}
-										w="100%"
-										h="56px"
-									></Input>
-								</Box>
-							</Flex>
-							{/* TODO: Melhorar a forma que cadastra o horario */}
 							<Box display="flex">
 								<Box h="70px" margin="22px 20px" w="100%">
-									<Text>Horarios de atendimento:</Text>
-									<Input
-										type="text"
-										placeholder="Ex: 08:30;12:00;14:00;18:00"
-										{...register('opening_hours')}
-										w="100%"
-										h="56px"
-										mt="4px"
-									></Input>
+									<Text>Imagem</Text>
+									<Box
+										display="flex"
+										gap="20px"
+										alignItems="center"
+										marginTop="5px"
+									>
+										<Input
+											type="hidden"
+											{...register('link_image')}
+										></Input>
+										{getValues()?.link_image && <Img
+											w={'50px'}
+											h={'50px'}
+											objectFit="contain"
+											src={getImageLinkApi(
+												getValues()?.link_image
+											)}
+											alt={getValues()?.description}
+											title={getValues()?.description}
+										/> || <BiImage />}
+										<Input
+											type="file"
+											accept="image/png,image/jpeg,image/jpg"
+											padding={'12px'}
+											{...register('product_img')}
+											w="100%"
+											h="56px"
+											mt="4px"
+										></Input>
+									</Box>
 								</Box>
 							</Box>
 						</ModalBody>

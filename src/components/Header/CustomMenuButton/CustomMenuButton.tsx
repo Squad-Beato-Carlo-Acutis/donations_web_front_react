@@ -1,8 +1,9 @@
 import { background, Button } from '@chakra-ui/react'
 
-export const CustomMenuButton = ({ title, active = false }) => {
+export const CustomMenuButton = ({ title, onClick = null, active = false }) => {
 	return (
 		<Button
+			onClick={onClick}
 			color={[
 				`${active ? '#FFF' : '#000'}`,
 				`${active ? '#FFF' : '#000'}`,
