@@ -1,15 +1,10 @@
 import { Flex, Avatar, Box, IconButton, Text } from '@chakra-ui/react'
 import { MdEdit } from 'react-icons/md'
 import { BsFillTrashFill } from 'react-icons/bs'
-
-export type TypeAvatarCardData = {
-	name: string
-	description?: string
-	avatarLink: string
-}
+import { TypeCardData } from '../types'
 
 export type TypeAvatarCardParams = {
-	data: TypeAvatarCardData
+	data: TypeCardData
 	callBackEdit?: any
 	callBackDelete?: any
 }

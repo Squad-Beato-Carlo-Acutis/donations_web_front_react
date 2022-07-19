@@ -14,6 +14,12 @@ import {
 	Heading,
 	Select,
 	Img,
+	NumberInput,
+	NumberDecrementStepper,
+	NumberIncrementStepper,
+	NumberInputField,
+	NumberInputStepper,
+	Checkbox,
 } from '@chakra-ui/react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import Header from '../../components/Header'
@@ -33,18 +39,19 @@ import {
 } from '../../helpers/varables'
 import { Pagination } from '../../components/Pagination'
 import {
-	CadProductFormData,
-	createProduct,
-	deleteProduct,
-	getCategories,
-	getMeasures,
-	getProducts,
-	TypeCategory,
-	TypeMeasure,
-	updateProduct,
-	uploadProductImage,
-} from '../../repository/donationsApi/products'
+	CadBasicBasketFormData,
+	createBasicBasket,
+	deleteBasicBasket,
+	deleteProductInBasicBasket,
+	getBasicBaskets,
+	insertProductInBasicBasket,
+} from '../../repository/donationsApi/basicbasket'
 import { getImageLinkApi } from '../../helpers/utils'
+import {
+	CadProductFormData,
+	getProducts,
+} from '../../repository/donationsApi/products'
+import { BiPackage } from 'react-icons/bi'
 
 const schema = yup
 	.object({
@@ -54,25 +61,30 @@ const schema = yup
 	})
 	.required()
 
-export default function Product() {
+export default function BasicBaskets() {
 	const { isOpen, onOpen, onClose } = useDisclosure()
 	const { register, handleSubmit, setValue, reset, getValues } = useForm({
 		resolver: yupResolver(schema),
 	})
-	const [customData, setCustomData] = useState<CadProductFormData[]>()
+	const [customData, setCustomData] = useState<CadBasicBasketFormData[]>()
 	const [isLoading, setIsLoading] = useState(true)
-	const [isNewProduct, setIsNewProduct] = useState(false)
+	const [isNewBasicBasket, setIsNewBasicBasket] = useState(false)
 	const [totalPages, setTotalPages] = useState(0)
 	const [currentPage, setCurrentPage] = useState(1)
 	const [dataLimit, setDataLimit] = useState(10)
 
-	const [measures, setMeasures] = useState<TypeMeasure[]>()
-	const [categories, setCategories] = useState<TypeCategory[]>()
+	const [products, setProducts] = useState<CadProductFormData[]>()
+	const [currentProduct, setCurrentProduct] = useState<any>({
+		productId: 1,
+		quantity: 1,
+		priority: 1,
+		ind_essential: false,
+	})
 
-	const getAllProducts = async () => {
+	const getAllBasicBaskets = async () => {
 		try {
 			setIsLoading(true)
-			const { data, totalPages: pTotalPages } = await getProducts(
+			const { data, totalPages: pTotalPages } = await getBasicBaskets(
 				dataLimit,
 				currentPage
 			)
@@ -88,11 +100,8 @@ export default function Product() {
 
 	const getData = async () => {
 		try {
-			const dataMeasures = await getMeasures()
-			setMeasures(dataMeasures)
-
-			const dataCategories = await getCategories()
-			setCategories(dataCategories)
+			const dataProducts = await getProducts()
+			setProducts(dataProducts.data)
 		} catch (err) {
 			console.error(err)
 		}
@@ -100,40 +109,36 @@ export default function Product() {
 	useEffect(() => {
 		getData()
 	}, [])
+
 	useEffect(() => {
-		getAllProducts()
+		getAllBasicBaskets()
 	}, [currentPage, dataLimit])
 
-	const hadlerSendForm: SubmitHandler<CadProductFormData> = async (
+	const hadlerSendForm: SubmitHandler<CadBasicBasketFormData> = async (
 		product: any
 	) => {
 		try {
-			let dataProduct: any = {}
-			if (isNewProduct) {
-				dataProduct = await createProduct({
-					description: product.description,
-					tb_category_id: product.tb_category_id,
-					tb_measure_id: product.tb_measure_id,
-				})
-			} else {
-				dataProduct = await updateProduct(
-					{
-						description: product.description,
-						tb_category_id: product.tb_category_id,
-						tb_measure_id: product.tb_measure_id,
-					},
-					product.id
-				)
-			}
-
-			if (product.product_img?.length && dataProduct.id) {
-				await uploadProductImage(dataProduct.id, product.product_img[0])
-			}
+			// if (isNewBasicBasket) {
+			// 	await createBasicBasket({
+			// 		description: product.description,
+			// 		tb_category_id: product.tb_category_id,
+			// 		tb_measure_id: product.tb_measure_id,
+			// 	})
+			// } else {
+			// 	await updateBasicBasket(
+			// 		{
+			// 			description: product.description,
+			// 			tb_category_id: product.tb_category_id,
+			// 			tb_measure_id: product.tb_measure_id,
+			// 		},
+			// 		product.id
+			// 	)
+			// }
 
 			Swal.fire(
 				'Sucesso',
 				`Produto ${
-					isNewProduct ? 'cadastrado' : 'atualizado'
+					isNewBasicBasket ? 'cadastrado' : 'atualizado'
 				} com sucesso`,
 				'success'
 			)
@@ -148,7 +153,7 @@ export default function Product() {
 		}
 	}
 
-	const handlerDeleteProduct = async (index: number) => {
+	const handlerDeleteBasicBasket = async (index: number) => {
 		Swal.fire({
 			title: 'Atenção!!!',
 			text: 'Todos os dados desse produto, como movimentações de estoque e informações serão deletados sem a possibilidades de recuperação, deseja continuar?',
@@ -159,7 +164,7 @@ export default function Product() {
 			.then((result) => {
 				if (result.isDenied) {
 					const { id } = customData[index]
-					deleteProduct(id)
+					deleteBasicBasket(id)
 					getData()
 					Swal.fire('Produto deletado com sucesso!', '', 'success')
 				}
@@ -177,7 +182,7 @@ export default function Product() {
 	const customCloseModal = () => {
 		reset()
 		onClose()
-		getAllProducts()
+		getAllBasicBaskets()
 	}
 
 	const customOpenEditModal = (index: number) => {
@@ -185,13 +190,163 @@ export default function Product() {
 		for (var field in data) {
 			setValue(field, data[field])
 		}
-		setIsNewProduct(false)
+		setIsNewBasicBasket(false)
 		onOpen()
 	}
 
 	const customOpenNewModal = () => {
-		setIsNewProduct(true)
+		setIsNewBasicBasket(true)
 		onOpen()
+	}
+
+	const renderBoxControlProducts = () => {
+		return (
+			<Box
+				display="flex"
+				padding="20px"
+				border="1px solid #b3b5c6"
+				margin="22px 20px"
+				flexDirection="column"
+			>
+				<Box
+					w="100%"
+					display="flex"
+					gap={'10px'}
+					justifyContent="center"
+					alignItems="center"
+				>
+					<Box w="100%">
+						<Text>Produto</Text>
+						<Select
+							w="100%"
+							h="56px"
+							mt="4px"
+							onChange={({ target: { value } }) => {
+								setCurrentProduct({
+									...currentProduct,
+									productId: parseInt(value),
+								})
+							}}
+						>
+							{products?.map((product) => {
+								return (
+									<option
+										key={`${product.id}-${product.description}`}
+										value={product.id}
+									>
+										{product.description}
+									</option>
+								)
+							})}
+						</Select>
+					</Box>
+					<Box>
+						<Text>Quantidade</Text>
+						<NumberInput
+							h="56px"
+							minW="150px"
+							mt="4px"
+							maxW={32}
+							defaultValue={1}
+							min={1}
+						>
+							<NumberInputField
+								onChange={({ target: { value } }) => {
+									setCurrentProduct({
+										...currentProduct,
+										quantity: parseInt(value),
+									})
+								}}
+								h="56px"
+							/>
+						</NumberInput>
+					</Box>
+					<Box>
+						<Text>Prioridade</Text>
+						<NumberInput
+							h="56px"
+							mt="4px"
+							maxW={32}
+							defaultValue={1}
+							min={1}
+						>
+							<NumberInputField
+								onChange={({ target: { value } }) => {
+									setCurrentProduct({
+										...currentProduct,
+										priority: parseInt(value),
+									})
+								}}
+								h="56px"
+							/>
+						</NumberInput>
+					</Box>
+					<Box
+						display="flex"
+						flexDirection="column"
+						alignItems="center"
+					>
+						<Text>Essencial</Text>
+						<Checkbox
+							h="56px"
+							mt="4px"
+							size="lg"
+							colorScheme="orange"
+							defaultChecked
+							onChange={({ target: { checked } }) => {
+								setCurrentProduct({
+									...currentProduct,
+									ind_essential: checked,
+								})
+							}}
+						/>
+					</Box>
+					<Box
+						display="flex"
+						flexDirection="column"
+						alignItems="center"
+					>
+						<Button
+							bg="#FFC632"
+							colorScheme="yellow"
+							size="md"
+							m="0 5px"
+							onClick={async () => {
+								await insertProductInBasicBasket(
+									getValues().id,
+									currentProduct
+								)
+								await getAllBasicBaskets()
+							}}
+						>
+							Adicionar
+						</Button>
+					</Box>
+				</Box>
+				<Box>
+					<CustomList
+						callBackDelete={ async (e) => {
+							await deleteProductInBasicBasket(
+								getValues().id,
+								getValues()?.products[e]?.tb_product_id
+							)
+						}}
+						isLoading={isLoading}
+						colums={[1, 2, 4, 5]}
+						data={getValues().products?.map(
+							({ product, quantity }) => ({
+								avatarLink: getImageLinkApi(
+									product?.link_image
+								),
+								name: product?.description,
+								description: `${quantity} ${product?.measure?.description}`,
+							})
+						)}
+						typeList="box-card"
+					/>
+				</Box>
+			</Box>
+		)
 	}
 
 	return (
@@ -208,18 +363,17 @@ export default function Product() {
 					padding="10px"
 				>
 					<Heading fontSize="32px" m="20px" paddingTop="20px">
-						Produtos cadastrados
+						Cestas Básicas
 					</Heading>
 					<CustomList
 						callBackEdit={customOpenEditModal}
-						callBackDelete={handlerDeleteProduct}
+						callBackDelete={handlerDeleteBasicBasket}
 						callBackNew={customOpenNewModal}
 						isLoading={isLoading}
 						colums={[1, 2, 4, 5]}
 						data={customData?.map((item) => ({
 							name: item.description,
-							description: `Unidade: ${item.measure?.description}`,
-							avatarLink: getImageLinkApi(item.link_image),
+							icon: <BiPackage fontSize="30px" />,
 						}))}
 						typeList="box-card"
 					/>
@@ -238,11 +392,12 @@ export default function Product() {
 				<form onSubmit={handleSubmit(hadlerSendForm)}>
 					<ModalContent>
 						<ModalHeader>
-							{isNewProduct ? 'Adicionar' : 'Atualizar'} Produto
+							{isNewBasicBasket ? 'Adicionar' : 'Atualizar'}{' '}
+							Produto
 						</ModalHeader>
 						<ModalCloseButton />
 						<ModalBody>
-							{!isNewProduct && (
+							{!isNewBasicBasket && (
 								<Box display="flex">
 									<Box h="70px" margin="22px 20px" w="100%">
 										<Text>ID:</Text>
@@ -272,90 +427,7 @@ export default function Product() {
 									></Input>
 								</Box>
 							</Box>
-							<Box display="flex">
-								<Box h="70px" margin="22px 20px" w="100%">
-									<Text>Categoria</Text>
-									<Select
-										{...register('tb_category_id')}
-										w="100%"
-										h="56px"
-										mt="4px"
-									>
-										{categories?.map((category) => {
-											return (
-												<option
-													key={`${category.id}-${category.description}`}
-													value={category.id}
-												>
-													{category.description}
-												</option>
-											)
-										})}
-									</Select>
-								</Box>
-								<Box
-									h="70px"
-									margin="0 20px"
-									mt="22px"
-									w="100%"
-								>
-									<Text>Unidade de Medida</Text>
-									<Select
-										{...register('tb_measure_id')}
-										w="100%"
-										h="56px"
-										mt="4px"
-									>
-										{measures?.map((measure) => {
-											return (
-												<option
-													key={`${measure.id}-${measure.description}`}
-													value={measure.id}
-												>
-													{measure.description}
-												</option>
-											)
-										})}
-									</Select>
-								</Box>
-							</Box>
-							<Box display="flex">
-								<Box h="70px" margin="22px 20px" w="100%">
-									<Text>Imagem</Text>
-									<Box
-										display="flex"
-										gap="20px"
-										alignItems="center"
-										marginTop="5px"
-									>
-										<Input
-											type="hidden"
-											{...register('link_image')}
-										></Input>
-										{(getValues()?.link_image && (
-											<Img
-												w={'50px'}
-												h={'50px'}
-												objectFit="contain"
-												src={getImageLinkApi(
-													getValues()?.link_image
-												)}
-												alt={getValues()?.description}
-												title={getValues()?.description}
-											/>
-										)) || <BiImage />}
-										<Input
-											type="file"
-											accept="image/png,image/jpeg,image/jpg"
-											padding={'12px'}
-											{...register('product_img')}
-											w="100%"
-											h="56px"
-											mt="4px"
-										></Input>
-									</Box>
-								</Box>
-							</Box>
+							<>{renderBoxControlProducts()}</>
 						</ModalBody>
 
 						<ModalFooter>
@@ -366,7 +438,7 @@ export default function Product() {
 								m="0 5px"
 								type="submit"
 							>
-								{isNewProduct ? 'Criar' : 'Salvar'}
+								{isNewBasicBasket ? 'Criar' : 'Salvar'}
 							</Button>
 							<Button
 								onClick={customCloseModal}
