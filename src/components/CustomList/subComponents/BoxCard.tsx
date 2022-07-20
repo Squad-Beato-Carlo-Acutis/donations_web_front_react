@@ -19,31 +19,43 @@ export const BoxCard = ({
 		<Flex
 			flexDirection="column"
 			alignItems="center"
-			justifyContent={"center"}
+			justifyContent={'center'}
 			borderRadius="5px"
 			boxShadow="rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;"
 			padding="10px"
 			maxW="250px"
 			gap={3}
 		>
-			{ avatarLink &&
+			{(avatarLink && (
 				<Img
-				src={avatarLink}
-				objectFit="contain"
-				w={'80px'}
-				h={'80px'}
-				borderRadius="100%"
-				boxShadow="rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;"
-			/> || <Avatar bg='#B6A16D' icon={icon || <FaQuestion />} />
-			}
-			<Box display="flex" flexDirection="column" alignItems="center" gap="7px">
+					src={avatarLink}
+					objectFit="contain"
+					w={'80px'}
+					h={'80px'}
+					borderRadius="100%"
+					boxShadow="rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;"
+				/>
+			)) || (
+				<Avatar
+					bg="#B6A16D"
+					w={'80px'}
+					h={'80px'}
+					icon={icon || <FaQuestion />}
+				/>
+			)}
+			<Box
+				display="flex"
+				flexDirection="column"
+				alignItems="center"
+				gap="7px"
+			>
 				<Box>
 					<Text
 						fontWeight="bold"
 						textOverflow="ellipsis"
 						overflow="hidden"
 						whiteSpace="nowrap"
-						textAlign={"center"}
+						textAlign={'center'}
 						// w="170px"
 					>
 						{name}
@@ -54,7 +66,7 @@ export const BoxCard = ({
 							textOverflow="ellipsis"
 							overflow="hidden"
 							whiteSpace="nowrap"
-							textAlign={"center"}
+							textAlign={'center'}
 							w="150px"
 						>
 							{description}
