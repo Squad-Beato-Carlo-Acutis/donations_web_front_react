@@ -33,20 +33,22 @@ import {
 } from '../../helpers/varables'
 import { Pagination } from '../../components/Pagination'
 import {
-	GetBasicBasketFormData,
-	createBasicBasket,
-	deleteBasicBasket,
-	getBasicBaskets,
-	updateBasicBasket,
+	createOrUpdateProductNeeded,
+	deleteProductNeeded,
+	GetProductNeededFormData,
+	getProductsNeeded,
 	haveProductsChanged,
-	updateAllProductInBasicBasket,
-} from '../../repository/donationsApi/basicbasket'
+} from '../../repository/donationsApi/productsNeeded'
 import { getImageLinkApi } from '../../helpers/utils'
 import {
 	CadProductFormData,
 	getProducts,
 } from '../../repository/donationsApi/products'
-import { BiPackage } from 'react-icons/bi'
+import {
+	GetBasicBasketFormData,
+	getBasicBaskets,
+} from '../../repository/donationsApi/basicbasket'
+import { getConferences } from '../../repository/donationsApi/conferences'
 import { TypeCurrentProduct } from '../../types/global'
 import { newCurrentProducts } from '../../helpers/emptyObjects'
 
@@ -56,19 +58,22 @@ const schema = yup
 	})
 	.required()
 
-export default function BasicBaskets() {
+export default function ProductsNeeded() {
 	const { isOpen, onOpen, onClose } = useDisclosure()
 	const { register, handleSubmit, setValue, reset, getValues } = useForm({
 		resolver: yupResolver(schema),
 	})
-	const [customData, setCustomData] = useState<GetBasicBasketFormData[]>()
+	const [customData, setCustomData] = useState<any[]>()
+	const [productsConferece, setProductsConferece] =
+		useState<GetProductNeededFormData[]>()
 	const [isLoading, setIsLoading] = useState(true)
-	const [isNewBasicBasket, setIsNewBasicBasket] = useState(false)
+	const [isNewProductsNeeded, setIsNewProductsNeeded] = useState(false)
 	const [totalPages, setTotalPages] = useState(0)
 	const [currentPage, setCurrentPage] = useState(1)
 	const [dataLimit, setDataLimit] = useState(10)
 
 	const [products, setProducts] = useState<CadProductFormData[]>()
+	const [basicBasket, setBasicBasket] = useState<GetBasicBasketFormData[]>()
 	const [currentProduct, setCurrentProduct] =
 		useState<TypeCurrentProduct>(newCurrentProducts)
 
@@ -78,10 +83,10 @@ export default function BasicBaskets() {
 
 	const [isSaving, setIsSaving] = useState(false)
 
-	const getAllBasicBaskets = async () => {
+	const getAllConfereces = async () => {
 		try {
 			setIsLoading(true)
-			const { data, totalPages: pTotalPages } = await getBasicBaskets(
+			const { data, totalPages: pTotalPages } = await getConferences(
 				dataLimit,
 				currentPage
 			)
@@ -99,6 +104,9 @@ export default function BasicBaskets() {
 		try {
 			const dataProducts = await getProducts()
 			setProducts(dataProducts.data)
+
+			const dataProductsNeeded = await getBasicBaskets()
+			setBasicBasket(dataProductsNeeded.data)
 		} catch (err) {
 			console.error(err)
 		}
@@ -108,46 +116,29 @@ export default function BasicBaskets() {
 	}, [])
 
 	useEffect(() => {
-		getAllBasicBaskets()
+		getAllConfereces()
 	}, [currentPage, dataLimit])
 
-	const hadlerSendForm = async (basicbasket: any) => {
+	const hadlerSendForm = async (conferece: any) => {
 		setIsSaving(true)
 
-		const updateProducts = async (basicBasketId: number) => {
-			if (haveProductsChanged(basicbasket.products, currentProducts)) {
+		try {
+			if (haveProductsChanged(productsConferece, currentProducts)) {
 				const newsProducts = currentProducts.map((product) => ({
 					productId: product.productId,
 					quantity: product.quantity,
-					priority: product.priority,
-					ind_essential: product.ind_essential,
 				}))
 
-				await updateAllProductInBasicBasket(basicBasketId, newsProducts)
-			}
-		}
-
-		try {
-			if (isNewBasicBasket) {
-				const dataBasicBasket = await createBasicBasket({
-					description: basicbasket.description,
+				await createOrUpdateProductNeeded({
+					conferenceId: conferece.id,
+					product: newsProducts,
 				})
-
-				updateProducts(dataBasicBasket.id)
-			} else {
-				const dataBasicBasket = await updateBasicBasket(
-					{
-						description: basicbasket.description,
-					},
-					basicbasket.id
-				)
-
-				updateProducts(dataBasicBasket.id)
 			}
+
 			Swal.fire(
 				'Sucesso',
 				`Produto ${
-					isNewBasicBasket ? 'cadastrado' : 'atualizado'
+					isNewProductsNeeded ? 'cadastrado' : 'atualizado'
 				} com sucesso`,
 				'success'
 			).then(() => {
@@ -165,55 +156,31 @@ export default function BasicBaskets() {
 		}
 	}
 
-	const handlerDeleteBasicBasket = async (index: number) => {
-		Swal.fire({
-			title: 'Atenção!!!',
-			text: 'Todos os dados dessa cesta básica, como produtos vinculados serão deletados sem a possibilidades de recuperação, deseja continuar?',
-			showDenyButton: true,
-			confirmButtonText: 'Cancelar',
-			denyButtonText: `Continuar`,
-		})
-			.then(async (result) => {
-				if (result.isDenied) {
-					const { id } = customData[index]
-					await deleteBasicBasket(id)
-					getAllBasicBaskets()
-					Swal.fire(
-						'Cesta básica deletada com sucesso!',
-						'',
-						'success'
-					)
-				}
-			})
-			.catch((err) => {
-				Swal.fire(
-					'Erro',
-					'Ocorreu um erro durante a solicitação de exclusão, tente novamente mais tarde ou contate um suporte.',
-					'error'
-				)
-				console.error(err)
-			})
-	}
-
 	const customCloseModal = () => {
 		reset()
 		setCurrentProduct(newCurrentProducts)
 		onClose()
-		getAllBasicBaskets()
+		getAllConfereces()
 	}
 
-	const customOpenEditModal = (index: number) => {
+	const customOpenEditModal = async (index: number) => {
 		const data = customData[index]
 		for (const field in data) {
 			setValue(field, data[field])
 		}
-		setIsNewBasicBasket(false)
+
+		const { data: dataProductsConference } = await getProductsNeeded({
+			conferenceId: data.id,
+		})
+
+		setProductsConferece(dataProductsConference)
+		setIsNewProductsNeeded(false)
 		loadCurrentProductModal(false)
 		onOpen()
 	}
 
 	const customOpenNewModal = () => {
-		setIsNewBasicBasket(true)
+		setIsNewProductsNeeded(true)
 		loadCurrentProductModal(true)
 		onOpen()
 	}
@@ -225,26 +192,20 @@ export default function BasicBaskets() {
 		}
 
 		const arrayTemp = []
-		getValues()?.products?.map(
+		productsConferece?.map(
 			({
-				product: {
-					link_image,
-					description,
-					measure: { description: desMeasure },
-				},
-				tb_product_id: productId,
+				productDescription,
+				productId,
+				productLinkImage,
+				productFullMeasurement,
 				quantity,
-				priority,
-				ind_essential,
 			}) => {
 				arrayTemp.push({
-					link_image,
+					productLinkImage,
 					productId,
 					quantity,
-					priority,
-					ind_essential,
-					title: description,
-					description: desMeasure,
+					title: productDescription,
+					description: productFullMeasurement,
 				})
 			}
 		)
@@ -457,15 +418,13 @@ export default function BasicBaskets() {
 					</Heading>
 					<CustomList
 						callBackEdit={customOpenEditModal}
-						callBackDelete={handlerDeleteBasicBasket}
 						callBackNew={customOpenNewModal}
 						isLoading={isLoading}
-						colums={[1, 2, 4, 5]}
 						data={customData?.map((item) => ({
 							name: item.description,
-							icon: <BiPackage fontSize="50px" />,
+							avatarLink: item.link_avatar,
 						}))}
-						typeList="box-card"
+						typeList="avatar-card"
 					/>
 					<Pagination
 						pCurrentPage={1}
@@ -482,19 +441,18 @@ export default function BasicBaskets() {
 				<form onSubmit={handleSubmit(hadlerSendForm)}>
 					<ModalContent>
 						<ModalHeader>
-							{isNewBasicBasket ? 'Adicionar' : 'Atualizar'}{' '}
+							{isNewProductsNeeded ? 'Adicionar' : 'Atualizar'}{' '}
 							Produto
 						</ModalHeader>
 						<ModalCloseButton />
 						<ModalBody>
-							{!isNewBasicBasket && (
+							{!isNewProductsNeeded && (
 								<Box display="flex">
 									<Box h="70px" margin="22px 20px" w="100%">
 										<Text>ID:</Text>
 										<Input
 											type="text"
 											readOnly={true}
-											disabled={true}
 											placeholder="ID"
 											{...register('id')}
 											w="100%"
@@ -509,6 +467,7 @@ export default function BasicBaskets() {
 									<Text>Descrição</Text>
 									<Input
 										type="text"
+										readOnly={true}
 										placeholder="Ex: Arroz, Feijão..."
 										{...register('description')}
 										w="100%"
@@ -529,7 +488,7 @@ export default function BasicBaskets() {
 								m="0 5px"
 								type="submit"
 							>
-								{isNewBasicBasket ? 'Criar' : 'Salvar'}
+								{isNewProductsNeeded ? 'Criar' : 'Salvar'}
 							</Button>
 							<Button
 								onClick={customCloseModal}

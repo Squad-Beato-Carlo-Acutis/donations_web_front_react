@@ -78,12 +78,12 @@ const CustomList = ({
 											avatarLink: item.avatarLink,
 											description: item.description,
 										}}
-										callBackEdit={() => {
+										callBackEdit={callBackEdit ? () => {
 											callBackEdit(index)
-										}}
-										callBackDelete={() => {
+										} : undefined}
+										callBackDelete={callBackDelete ? () => {
 											callBackDelete(index)
-										}}
+										} : undefined}
 									/>
 								)
 							case 'box-card':
