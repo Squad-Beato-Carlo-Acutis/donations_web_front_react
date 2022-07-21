@@ -13,15 +13,18 @@ import {
 	Stack,
 } from '@chakra-ui/react'
 
-import { AvatarCard, TypeAvatarCardData } from './subComponents/AvatarCard'
+import { AvatarCard } from './subComponents/AvatarCard'
+import { BoxCard } from './subComponents/BoxCard'
+import { TypeCardData } from './types'
 
 type TypeParams = {
 	callBackEdit?: any
 	callBackDelete?: any
 	callBackNew?: any
-	typeList: 'avatar-card'
-	data: TypeAvatarCardData[]
+	typeList: 'avatar-card' | 'box-card'
+	data: TypeCardData[]
 	isLoading?: boolean
+	colums?: Array<number>
 }
 
 const CustomList = ({
@@ -31,6 +34,7 @@ const CustomList = ({
 	typeList,
 	data,
 	isLoading,
+	colums = [1, 1, 2, 3]
 }: TypeParams) => {
 	const [searchText, setSearchText] = useState('')
 	const loadList = () => {
@@ -52,9 +56,10 @@ const CustomList = ({
 
 		return (
 			<SimpleGrid
-				columns={[1, 1, 2, 3]}
+				columns={colums}
 				spacing="20px"
 				padding="30px 30px"
+				justifyItems={"center"}
 			>
 				{data
 					.filter((item) =>
@@ -81,6 +86,24 @@ const CustomList = ({
 										}}
 									/>
 								)
+							case 'box-card':
+								return (
+									<BoxCard
+										key={index}
+										data={{
+											name: item.name,
+											avatarLink: item.avatarLink,
+											description: item.description,
+											icon: item.icon,
+										}}
+										callBackEdit={callBackEdit ? () => {
+											callBackEdit(index)
+										} : undefined}
+										callBackDelete={callBackDelete ? () => {
+											callBackDelete(index)
+										} : undefined}
+									/>
+								)
 						}
 					})}
 			</SimpleGrid>
@@ -92,6 +115,7 @@ const CustomList = ({
 			flexDirection="column"
 			justifyContent="space-between"
 			bg="#fafafa"
+			borderRadius="8px"
 		>
 			<Flex
 				flexDirection="row"

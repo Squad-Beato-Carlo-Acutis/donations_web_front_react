@@ -71,7 +71,7 @@ export function AuthProvider({ children }) {
 			userName,
 		})
 
-		Router.push(ADMIN_HOME_MAIN_ROUTE)
+		window.location.href = ADMIN_HOME_MAIN_ROUTE
 	}
 
 	function signOut() {

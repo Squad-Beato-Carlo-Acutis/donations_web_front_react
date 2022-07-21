@@ -1,15 +1,10 @@
 import { Flex, Avatar, Box, IconButton, Text } from '@chakra-ui/react'
 import { MdEdit } from 'react-icons/md'
 import { BsFillTrashFill } from 'react-icons/bs'
-
-export type TypeAvatarCardData = {
-	name: string
-	description: string
-	avatarLink: string
-}
+import { TypeCardData } from '../types'
 
 export type TypeAvatarCardParams = {
-	data: TypeAvatarCardData
+	data: TypeCardData
 	callBackEdit?: any
 	callBackDelete?: any
 }
@@ -40,15 +35,17 @@ export const AvatarCard = ({
 					>
 						{name}
 					</Text>
-					<Text
-						fontSize="sm"
-						textOverflow="ellipsis"
-						overflow="hidden"
-						whiteSpace="nowrap"
-						w="150px"
-					>
-						{description}
-					</Text>
+					{description && (
+						<Text
+							fontSize="sm"
+							textOverflow="ellipsis"
+							overflow="hidden"
+							whiteSpace="nowrap"
+							w="150px"
+						>
+							{description}
+						</Text>
+					)}
 				</Box>
 			</Flex>
 			<Flex flexDirection="column" gap="2" alignItems="center">
