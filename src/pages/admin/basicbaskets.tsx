@@ -17,7 +17,7 @@ import {
 	NumberInputField,
 	Checkbox,
 } from '@chakra-ui/react'
-import { SubmitHandler, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import Header from '../../components/Header'
 
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -33,12 +33,15 @@ import {
 } from '../../helpers/varables'
 import { Pagination } from '../../components/Pagination'
 import {
-	CadBasicBasketFormData,
+	GetBasicBasketFormData,
 	createBasicBasket,
 	deleteBasicBasket,
-	deleteProductInBasicBasket,
 	getBasicBaskets,
-	insertProductInBasicBasket,
+	updateBasicBasket,
+	TypeCurrentProduct,
+	newCurrentProducts,
+	haveProductsChanged,
+	updateAllProductInBasicBasket,
 } from '../../repository/donationsApi/basicbasket'
 import { getImageLinkApi } from '../../helpers/utils'
 import {
@@ -50,8 +53,6 @@ import { BiPackage } from 'react-icons/bi'
 const schema = yup
 	.object({
 		description: yup.string().required(),
-		tb_measure_id: yup.number().required(),
-		tb_category_id: yup.number().required(),
 	})
 	.required()
 
@@ -60,7 +61,7 @@ export default function BasicBaskets() {
 	const { register, handleSubmit, setValue, reset, getValues } = useForm({
 		resolver: yupResolver(schema),
 	})
-	const [customData, setCustomData] = useState<CadBasicBasketFormData[]>()
+	const [customData, setCustomData] = useState<GetBasicBasketFormData[]>()
 	const [isLoading, setIsLoading] = useState(true)
 	const [isNewBasicBasket, setIsNewBasicBasket] = useState(false)
 	const [totalPages, setTotalPages] = useState(0)
@@ -68,14 +69,12 @@ export default function BasicBaskets() {
 	const [dataLimit, setDataLimit] = useState(10)
 
 	const [products, setProducts] = useState<CadProductFormData[]>()
-	const [currentProduct, setCurrentProduct] = useState<any>({
-		productId: null,
-		quantity: 1,
-		priority: 1,
-		ind_essential: false,
-	})
+	const [currentProduct, setCurrentProduct] =
+		useState<TypeCurrentProduct>(newCurrentProducts)
 
-	const [currentProducts, setCurrentProducts] = useState<any[]>([])
+	const [currentProducts, setCurrentProducts] = useState<
+		TypeCurrentProduct[]
+	>([])
 
 	const [isSaving, setIsSaving] = useState(false)
 
@@ -100,7 +99,6 @@ export default function BasicBaskets() {
 		try {
 			const dataProducts = await getProducts()
 			setProducts(dataProducts.data)
-
 		} catch (err) {
 			console.error(err)
 		}
@@ -113,36 +111,51 @@ export default function BasicBaskets() {
 		getAllBasicBaskets()
 	}, [currentPage, dataLimit])
 
-	const hadlerSendForm: SubmitHandler<CadBasicBasketFormData> = async (
-		product: any
-	) => {
-		try {
-			// if (isNewBasicBasket) {
-			// 	await createBasicBasket({
-			// 		description: product.description,
-			// 		tb_category_id: product.tb_category_id,
-			// 		tb_measure_id: product.tb_measure_id,
-			// 	})
-			// } else {
-			// 	await updateBasicBasket(
-			// 		{
-			// 			description: product.description,
-			// 			tb_category_id: product.tb_category_id,
-			// 			tb_measure_id: product.tb_measure_id,
-			// 		},
-			// 		product.id
-			// 	)
-			// }
+	const hadlerSendForm = async (basicbasket: any) => {
+		setIsSaving(true)
 
+		const updateProducts = async (basicBasketId: number) => {
+			if (haveProductsChanged(basicbasket.products, currentProducts)) {
+				const newsProducts = currentProducts.map((product) => ({
+					productId: product.productId,
+					quantity: product.quantity,
+					priority: product.priority,
+					ind_essential: product.ind_essential,
+				}))
+
+				await updateAllProductInBasicBasket(basicBasketId, newsProducts)
+			}
+		}
+
+		try {
+			if (isNewBasicBasket) {
+				const dataBasicBasket = await createBasicBasket({
+					description: basicbasket.description,
+				})
+
+				updateProducts(dataBasicBasket.id)
+			} else {
+				const dataBasicBasket = await updateBasicBasket(
+					{
+						description: basicbasket.description,
+					},
+					basicbasket.id
+				)
+
+				updateProducts(dataBasicBasket.id)
+			}
 			Swal.fire(
 				'Sucesso',
 				`Produto ${
 					isNewBasicBasket ? 'cadastrado' : 'atualizado'
 				} com sucesso`,
 				'success'
-			)
-			customCloseModal()
+			).then(() => {
+				customCloseModal()
+			})
+			setIsSaving(false)
 		} catch (err) {
+			setIsSaving(false)
 			Swal.fire(
 				'Erro',
 				'Ocorreu um erro durante a solicitação de cadastro, tente novamente mais tarde ou contate um suporte.',
@@ -155,17 +168,21 @@ export default function BasicBaskets() {
 	const handlerDeleteBasicBasket = async (index: number) => {
 		Swal.fire({
 			title: 'Atenção!!!',
-			text: 'Todos os dados desse produto, como movimentações de estoque e informações serão deletados sem a possibilidades de recuperação, deseja continuar?',
+			text: 'Todos os dados dessa cesta básica, como produtos vinculados serão deletados sem a possibilidades de recuperação, deseja continuar?',
 			showDenyButton: true,
 			confirmButtonText: 'Cancelar',
 			denyButtonText: `Continuar`,
 		})
-			.then((result) => {
+			.then(async (result) => {
 				if (result.isDenied) {
 					const { id } = customData[index]
-					deleteBasicBasket(id)
-					getData()
-					Swal.fire('Produto deletado com sucesso!', '', 'success')
+					await deleteBasicBasket(id)
+					getAllBasicBaskets()
+					Swal.fire(
+						'Cesta básica deletada com sucesso!',
+						'',
+						'success'
+					)
 				}
 			})
 			.catch((err) => {
@@ -180,19 +197,14 @@ export default function BasicBaskets() {
 
 	const customCloseModal = () => {
 		reset()
-		setCurrentProduct({
-			productId: 0,
-			quantity: 1,
-			priority: 1,
-			ind_essential: true,
-		})
+		setCurrentProduct(newCurrentProducts)
 		onClose()
 		getAllBasicBaskets()
 	}
 
 	const customOpenEditModal = (index: number) => {
 		const data = customData[index]
-		for (var field in data) {
+		for (const field in data) {
 			setValue(field, data[field])
 		}
 		setIsNewBasicBasket(false)
@@ -207,7 +219,7 @@ export default function BasicBaskets() {
 	}
 
 	const loadCurrentProductModal = (isNew: boolean) => {
-		if(isNew) {
+		if (isNew) {
 			setCurrentProducts([])
 			return
 		}
@@ -238,10 +250,70 @@ export default function BasicBaskets() {
 		)
 
 		setCurrentProducts(arrayTemp)
-
 	}
 
 	const renderBoxControlProducts = () => {
+		const addProduct = () => {
+			if (!currentProduct?.productId) return
+
+			const product = currentProducts?.find((item) => {
+				return item.productId === currentProduct?.productId
+			})
+
+			if (product !== undefined) {
+				const newListProducts = currentProducts.filter(
+					(item) => item.productId !== currentProduct?.productId
+				)
+
+				setCurrentProducts([
+					...newListProducts,
+					{
+						...currentProduct,
+						quantity: currentProduct.quantity + product.quantity,
+					},
+				])
+
+				return
+			}
+
+			setCurrentProducts([...currentProducts, currentProduct])
+		}
+
+		const removeProduct = (index: number) => {
+			setCurrentProducts(
+				currentProducts.filter((product) => {
+					return (
+						product.productId !== currentProducts[index]?.productId
+					)
+				})
+			)
+		}
+
+		const selectProduct = ({ target: { value } }) => {
+			if (!value) return
+			const product = JSON.parse(value)
+			setCurrentProduct({
+				...currentProduct,
+				productId: parseInt(product?.id),
+				link_image: product?.link_image,
+				title: product?.description,
+				description: product?.measure?.description,
+			})
+		}
+
+		const renderOptionsProduct = () => {
+			return products?.map((product) => {
+				return (
+					<option
+						key={`${product.id}-${product.description}`}
+						value={JSON.stringify(product)}
+					>
+						{product.description}
+					</option>
+				)
+			})
+		}
+
 		return (
 			<Box
 				display="flex"
@@ -249,6 +321,7 @@ export default function BasicBaskets() {
 				border="1px solid #b3b5c6"
 				margin="22px 20px"
 				flexDirection="column"
+				borderRadius="5px"
 			>
 				<Box
 					w="100%"
@@ -256,6 +329,7 @@ export default function BasicBaskets() {
 					gap={'10px'}
 					justifyContent="center"
 					alignItems="center"
+					mb="9px"
 				>
 					<Box w="100%">
 						<Text>Produto</Text>
@@ -263,30 +337,10 @@ export default function BasicBaskets() {
 							w="100%"
 							h="56px"
 							mt="4px"
-							placeholder='Selecione um produto...'
-							onChange={({ target: { value } }) => {
-								if(!value) return
-								const product = JSON.parse(value)
-								setCurrentProduct({
-									...currentProduct,
-									productId: parseInt(product?.id),
-									link_image: product?.link_image,
-									title: product?.description,
-									description: product?.measure?.description
-								})
-							}}
+							placeholder="Selecione um produto..."
+							onChange={selectProduct}
 						>
-
-							{products?.map((product) => {
-								return (
-									<option
-										key={`${product.id}-${product.description}`}
-										value={JSON.stringify(product)}
-									>
-										{product.description}
-									</option>
-								)
-							})}
+							{renderOptionsProduct()}
 						</Select>
 					</Box>
 					<Box>
@@ -360,35 +414,7 @@ export default function BasicBaskets() {
 							colorScheme="yellow"
 							size="md"
 							m="0 5px"
-							onClick={async () => {
-								if(!currentProduct?.productId) return
-
-								const product = currentProducts?.find((product) => {
-									return product.productId === currentProduct?.productId
-								})
-
-								if(product !== undefined) {
-									const newCurrentProducts = currentProducts.filter((product) => (
-										product.productId !== currentProduct?.productId
-									))
-
-									setCurrentProducts([...newCurrentProducts, {
-										...currentProduct,
-										quantity: currentProduct.quantity + product.quantity
-									}])
-
-									return
-								}
-
-								setCurrentProducts([...currentProducts, currentProduct])
-
-								// await insertProductInBasicBasket(
-								// 	getValues().id,
-								// 	currentProduct
-								// )
-								// await getAllBasicBaskets()
-								// loadCurrentProductModal()
-							}}
+							onClick={addProduct}
 						>
 							Adicionar
 						</Button>
@@ -396,21 +422,11 @@ export default function BasicBaskets() {
 				</Box>
 				<Box>
 					<CustomList
-						callBackDelete={async (e) => {
-							setCurrentProducts(currentProducts.filter((product) => {
-								return product.productId !== currentProducts[e]?.productId
-							}))
-							// await deleteProductInBasicBasket(
-							// 	getValues().id,
-							// 	getValues()?.products[e]?.tb_product_id
-							// )
-							// await getAllBasicBaskets()
-							// loadCurrentProductModal()
-						}}
+						callBackDelete={removeProduct}
 						isLoading={isLoading}
 						colums={[1, 2, 4, 5]}
 						data={currentProducts?.map(
-							({ link_image, title, description, quantity}) => ({
+							({ link_image, title, description, quantity }) => ({
 								avatarLink: getImageLinkApi(link_image),
 								name: title,
 								description: `${quantity} ${description}`,

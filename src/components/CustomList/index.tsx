@@ -115,6 +115,7 @@ const CustomList = ({
 			flexDirection="column"
 			justifyContent="space-between"
 			bg="#fafafa"
+			borderRadius="8px"
 		>
 			<Flex
 				flexDirection="row"

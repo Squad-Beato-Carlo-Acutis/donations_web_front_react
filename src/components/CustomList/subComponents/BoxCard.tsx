@@ -24,6 +24,7 @@ export const BoxCard = ({
 			boxShadow="rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;"
 			padding="10px"
 			maxW="250px"
+			minW="180px"
 			gap={3}
 		>
 			{(avatarLink && (

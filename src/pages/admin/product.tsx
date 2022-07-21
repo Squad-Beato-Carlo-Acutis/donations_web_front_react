@@ -156,11 +156,11 @@ export default function Product() {
 			confirmButtonText: 'Cancelar',
 			denyButtonText: `Continuar`,
 		})
-			.then((result) => {
+			.then(async (result) => {
 				if (result.isDenied) {
 					const { id } = customData[index]
-					deleteProduct(id)
-					getData()
+					await deleteProduct(id)
+					getAllProducts()
 					Swal.fire('Produto deletado com sucesso!', '', 'success')
 				}
 			})
@@ -182,7 +182,7 @@ export default function Product() {
 
 	const customOpenEditModal = (index: number) => {
 		const data = customData[index]
-		for (var field in data) {
+		for (const field in data) {
 			setValue(field, data[field])
 		}
 		setIsNewProduct(false)
