@@ -46,7 +46,7 @@ export const getProductsNeeded = async ({
 	conferenceId,
 	pLimit,
 	pPage,
-}: TypeParamGetProductsNeeded): Promise<TypeGetAllProducts> => {
+}: TypeParamGetProductsNeeded): Promise<GetProductNeededFormData[]> => {
 	const limit = pLimit ? `limit=${pLimit}` : ''
 	const page = pPage ? `page=${pPage}` : ''
 
@@ -59,9 +59,9 @@ export const getProductsNeeded = async ({
 		query += page
 	}
 
-	const { data: products } = await ApiDonationsWeb.get<TypeGetAllProducts>(
-		`/api/v1/conference/${conferenceId}/productsneeded${query}`
-	)
+	const { data: products } = await ApiDonationsWeb.get<
+		GetProductNeededFormData[]
+	>(`/api/v1/conference/${conferenceId}/productsneeded${query}`)
 
 	return products
 }
@@ -105,13 +105,11 @@ export const deleteProductNeeded = async ({
 	return data
 }
 
-
 export const haveProductsChanged = (
 	currentProducts: Array<GetProductNeededFormData>,
 	newsProducts: Array<TypeCurrentProduct>
 ): boolean => {
-
-	if(!newsProducts?.length) return false
+	if (!newsProducts?.length) return false
 
 	if (!currentProducts?.length) return true
 
@@ -139,5 +137,47 @@ export const haveProductsChanged = (
 		)
 	})
 
-	return (haveChangedOrNew !== undefined) || haveDeleted !== undefined
+	return haveChangedOrNew !== undefined || haveDeleted !== undefined
+}
+
+export const mergeTwoArrays = (
+	currentProducts: Array<TypeCurrentProduct>,
+	newsProducts: Array<TypeCurrentProduct>
+): Array<TypeCurrentProduct> => {
+	if (!newsProducts?.length) return currentProducts
+
+	if (!currentProducts?.length) return newsProducts
+
+	const newArray: TypeCurrentProduct[] = []
+	const addNewProduct = (product: TypeCurrentProduct) => {
+		const isExist =
+			newArray?.find((productNewArray) => {
+				return productNewArray.productId === product.productId
+			}) !== undefined
+
+		if (isExist) return
+
+		newArray.push(product)
+	}
+
+	newsProducts.forEach((product) => {
+		let isExist = false
+		currentProducts.forEach((currentProduct) => {
+			if (product.productId === currentProduct.productId) {
+				addNewProduct({
+					...product,
+					quantity: product.quantity + currentProduct.quantity,
+				})
+				isExist = true
+			}
+		})
+
+		if (!isExist) {
+			addNewProduct({
+				...product,
+			})
+		}
+	})
+
+	return newArray || []
 }

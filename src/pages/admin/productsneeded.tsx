@@ -15,7 +15,6 @@ import {
 	Select,
 	NumberInput,
 	NumberInputField,
-	Checkbox,
 } from '@chakra-ui/react'
 import { useForm } from 'react-hook-form'
 import Header from '../../components/Header'
@@ -34,10 +33,8 @@ import {
 import { Pagination } from '../../components/Pagination'
 import {
 	createOrUpdateProductNeeded,
-	deleteProductNeeded,
-	GetProductNeededFormData,
 	getProductsNeeded,
-	haveProductsChanged,
+	mergeTwoArrays,
 } from '../../repository/donationsApi/productsNeeded'
 import { getImageLinkApi } from '../../helpers/utils'
 import {
@@ -51,6 +48,7 @@ import {
 import { getConferences } from '../../repository/donationsApi/conferences'
 import { TypeCurrentProduct } from '../../types/global'
 import { newCurrentProducts } from '../../helpers/emptyObjects'
+import PageLoading from '../../components/PageLoading/PageLoading'
 
 const schema = yup
 	.object({
@@ -60,13 +58,12 @@ const schema = yup
 
 export default function ProductsNeeded() {
 	const { isOpen, onOpen, onClose } = useDisclosure()
-	const { register, handleSubmit, setValue, reset, getValues } = useForm({
+	const { register, handleSubmit, setValue, reset } = useForm({
 		resolver: yupResolver(schema),
 	})
 	const [customData, setCustomData] = useState<any[]>()
-	const [productsConferece, setProductsConferece] =
-		useState<GetProductNeededFormData[]>()
 	const [isLoading, setIsLoading] = useState(true)
+	const [isFullLoading, setIsFullLoading] = useState(false)
 	const [isNewProductsNeeded, setIsNewProductsNeeded] = useState(false)
 	const [totalPages, setTotalPages] = useState(0)
 	const [currentPage, setCurrentPage] = useState(1)
@@ -76,12 +73,15 @@ export default function ProductsNeeded() {
 	const [basicBasket, setBasicBasket] = useState<GetBasicBasketFormData[]>()
 	const [currentProduct, setCurrentProduct] =
 		useState<TypeCurrentProduct>(newCurrentProducts)
-
+	const [currentBasicBasket, setCurrentBasicBasket] = useState<
+		TypeCurrentProduct[]
+	>([])
 	const [currentProducts, setCurrentProducts] = useState<
 		TypeCurrentProduct[]
 	>([])
+	const [currentQuantity, setCurrentQuantity] = useState<number>(1)
 
-	const [isSaving, setIsSaving] = useState(false)
+	const [additionType, setAdditionType] = useState<string>('products')
 
 	const getAllConfereces = async () => {
 		try {
@@ -120,33 +120,29 @@ export default function ProductsNeeded() {
 	}, [currentPage, dataLimit])
 
 	const hadlerSendForm = async (conferece: any) => {
-		setIsSaving(true)
+		setIsFullLoading(true)
 
 		try {
-			if (haveProductsChanged(productsConferece, currentProducts)) {
-				const newsProducts = currentProducts.map((product) => ({
-					productId: product.productId,
-					quantity: product.quantity,
-				}))
+			const newsProducts = currentProducts.map((product) => ({
+				productId: product.productId,
+				quantity: product.quantity,
+			}))
 
-				await createOrUpdateProductNeeded({
-					conferenceId: conferece.id,
-					product: newsProducts,
-				})
-			}
+			await createOrUpdateProductNeeded({
+				conferenceId: conferece.id,
+				product: newsProducts,
+			})
 
 			Swal.fire(
 				'Sucesso',
-				`Produto ${
-					isNewProductsNeeded ? 'cadastrado' : 'atualizado'
+				`Produtos ${
+					isNewProductsNeeded ? 'cadastrados' : 'atualizados'
 				} com sucesso`,
 				'success'
 			).then(() => {
 				customCloseModal()
 			})
-			setIsSaving(false)
 		} catch (err) {
-			setIsSaving(false)
 			Swal.fire(
 				'Erro',
 				'Ocorreu um erro durante a solicitação de cadastro, tente novamente mais tarde ou contate um suporte.',
@@ -154,28 +150,32 @@ export default function ProductsNeeded() {
 			)
 			console.error(err)
 		}
+		setIsFullLoading(false)
 	}
 
 	const customCloseModal = () => {
 		reset()
 		setCurrentProduct(newCurrentProducts)
+		setCurrentBasicBasket([])
+		setAdditionType('products')
 		onClose()
 		getAllConfereces()
 	}
 
 	const customOpenEditModal = async (index: number) => {
+		setIsFullLoading(true)
 		const data = customData[index]
 		for (const field in data) {
 			setValue(field, data[field])
 		}
 
-		const { data: dataProductsConference } = await getProductsNeeded({
+		const productsNeededConference = await getProductsNeeded({
 			conferenceId: data.id,
 		})
 
-		setProductsConferece(dataProductsConference)
 		setIsNewProductsNeeded(false)
-		loadCurrentProductModal(false)
+		loadCurrentProductModal(false, productsNeededConference)
+		setIsFullLoading(false)
 		onOpen()
 	}
 
@@ -185,14 +185,14 @@ export default function ProductsNeeded() {
 		onOpen()
 	}
 
-	const loadCurrentProductModal = (isNew: boolean) => {
+	const loadCurrentProductModal = (isNew: boolean, data = null) => {
 		if (isNew) {
 			setCurrentProducts([])
 			return
 		}
 
 		const arrayTemp = []
-		productsConferece?.map(
+		data?.map(
 			({
 				productDescription,
 				productId,
@@ -201,7 +201,7 @@ export default function ProductsNeeded() {
 				quantity,
 			}) => {
 				arrayTemp.push({
-					productLinkImage,
+					link_image: productLinkImage,
 					productId,
 					quantity,
 					title: productDescription,
@@ -215,29 +215,40 @@ export default function ProductsNeeded() {
 
 	const renderBoxControlProducts = () => {
 		const addProduct = () => {
-			if (!currentProduct?.productId) return
+			if (additionType === 'products') {
+				if (!currentProduct?.productId) return
 
-			const product = currentProducts?.find((item) => {
-				return item.productId === currentProduct?.productId
-			})
+				const product = currentProducts?.find((item) => {
+					return item.productId === currentProduct?.productId
+				})
 
-			if (product !== undefined) {
-				const newListProducts = currentProducts.filter(
-					(item) => item.productId !== currentProduct?.productId
-				)
+				if (product !== undefined) {
+					const newListProducts = currentProducts.filter(
+						(item) => item.productId !== currentProduct?.productId
+					)
 
-				setCurrentProducts([
-					...newListProducts,
-					{
-						...currentProduct,
-						quantity: currentProduct.quantity + product.quantity,
-					},
-				])
+					setCurrentProducts([
+						...newListProducts,
+						{
+							...currentProduct,
+							quantity:
+								currentProduct.quantity + product.quantity,
+						},
+					])
+
+					return
+				}
+
+				setCurrentProducts([...currentProducts, currentProduct])
 
 				return
 			}
 
-			setCurrentProducts([...currentProducts, currentProduct])
+			if (!currentBasicBasket?.length) return
+
+			setCurrentProducts(
+				mergeTwoArrays(currentProducts, currentBasicBasket)
+			)
 		}
 
 		const removeProduct = (index: number) => {
@@ -260,16 +271,69 @@ export default function ProductsNeeded() {
 				title: product?.description,
 				description: product?.measure?.description,
 			})
+
+
+      console.log("TCL: selectProduct -> ", {
+				...currentProduct,
+				productId: parseInt(product?.id),
+				link_image: product?.link_image,
+				title: product?.description,
+				description: product?.measure?.description,
+			})
+		}
+
+		const selectBasicBasket = ({ target: { value } }) => {
+			if (!value) return
+			const product = JSON.parse(value)
+
+			if (!product?.length) return
+
+			const arrayTemp = []
+			product?.map(
+				({
+					product: {
+						description,
+						link_image,
+						id,
+						measure: { description: productMeasurement },
+					},
+					quantity,
+				}) => {
+					arrayTemp.push({
+						link_image,
+						productId: id,
+						quantity: quantity * currentQuantity,
+						title: description,
+						description: productMeasurement,
+					})
+				}
+			)
+
+      console.log("TCL: selectBasicBasket -> arrayTemp", arrayTemp)
+			setCurrentBasicBasket(arrayTemp)
 		}
 
 		const renderOptionsProduct = () => {
-			return products?.map((product) => {
+			if (additionType === 'products') {
+				return products?.map((product) => {
+					return (
+						<option
+							key={`${product.id}-${product.description}`}
+							value={JSON.stringify(product)}
+						>
+							{product.description}
+						</option>
+					)
+				})
+			}
+
+			return basicBasket?.map((basket) => {
 				return (
 					<option
-						key={`${product.id}-${product.description}`}
-						value={JSON.stringify(product)}
+						key={`${basket.id}-${basket.description}`}
+						value={JSON.stringify(basket.products)}
 					>
-						{product.description}
+						{basket.description}
 					</option>
 				)
 			})
@@ -292,14 +356,40 @@ export default function ProductsNeeded() {
 					alignItems="center"
 					mb="9px"
 				>
-					<Box w="100%">
-						<Text>Produto</Text>
+					<Box minW="150px">
+						<Text>Adicionar por</Text>
 						<Select
 							w="100%"
 							h="56px"
 							mt="4px"
-							placeholder="Selecione um produto..."
-							onChange={selectProduct}
+							onChange={({ target: { value } }) => {
+								setAdditionType(value)
+							}}
+						>
+							<option value="products">Produtos</option>
+							<option value="basicbasket">Cesta Básica</option>
+						</Select>
+					</Box>
+					<Box w="100%">
+						<Text>
+							{additionType === 'products'
+								? 'Produto'
+								: 'Cesta básica'}
+						</Text>
+						<Select
+							w="100%"
+							h="56px"
+							mt="4px"
+							placeholder={`Selecione ${
+								additionType === 'products'
+									? 'um produto'
+									: 'uma cesta básica'
+							}...`}
+							onChange={
+								additionType === 'products'
+									? selectProduct
+									: selectBasicBasket
+							}
 						>
 							{renderOptionsProduct()}
 						</Select>
@@ -320,50 +410,12 @@ export default function ProductsNeeded() {
 										...currentProduct,
 										quantity: parseInt(value),
 									})
+
+									setCurrentQuantity(parseInt(value))
 								}}
 								h="56px"
 							/>
 						</NumberInput>
-					</Box>
-					<Box>
-						<Text>Prioridade</Text>
-						<NumberInput
-							h="56px"
-							mt="4px"
-							maxW={32}
-							defaultValue={1}
-							min={1}
-						>
-							<NumberInputField
-								onChange={({ target: { value } }) => {
-									setCurrentProduct({
-										...currentProduct,
-										priority: parseInt(value),
-									})
-								}}
-								h="56px"
-							/>
-						</NumberInput>
-					</Box>
-					<Box
-						display="flex"
-						flexDirection="column"
-						alignItems="center"
-					>
-						<Text>Essencial</Text>
-						<Checkbox
-							h="56px"
-							mt="4px"
-							size="lg"
-							colorScheme="orange"
-							defaultChecked
-							onChange={({ target: { checked } }) => {
-								setCurrentProduct({
-									...currentProduct,
-									ind_essential: checked,
-								})
-							}}
-						/>
 					</Box>
 					<Box
 						display="flex"
@@ -402,6 +454,7 @@ export default function ProductsNeeded() {
 
 	return (
 		<>
+			<PageLoading isLoading={isFullLoading}/>
 			<Box w="100%" minHeight="100vh" bg="#E5E5E5">
 				<Header />
 				<Box
@@ -453,6 +506,7 @@ export default function ProductsNeeded() {
 										<Input
 											type="text"
 											readOnly={true}
+											background="#f5f5f5"
 											placeholder="ID"
 											{...register('id')}
 											w="100%"
@@ -468,6 +522,7 @@ export default function ProductsNeeded() {
 									<Input
 										type="text"
 										readOnly={true}
+										background="#f5f5f5"
 										placeholder="Ex: Arroz, Feijão..."
 										{...register('description')}
 										w="100%"
@@ -482,7 +537,7 @@ export default function ProductsNeeded() {
 						<ModalFooter>
 							<Button
 								bg="#FFC632"
-								disabled={isSaving}
+								disabled={isFullLoading}
 								colorScheme="yellow"
 								size="md"
 								m="0 5px"
