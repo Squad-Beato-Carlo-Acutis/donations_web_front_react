@@ -26,7 +26,7 @@ import { AuthContext } from '../../context/AuthContext'
 import {
 	CustomMenuButton,
 } from './CustomMenuButton/CustomMenuButton'
-import Router, { useRouter } from 'next/router'
+import { useRouter } from 'next/router'
 
 const Header = () => {
 	const router = useRouter()

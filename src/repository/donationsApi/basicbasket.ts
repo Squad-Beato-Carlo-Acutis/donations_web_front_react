@@ -1,3 +1,4 @@
+import { TypeCurrentProduct } from '../../types/global'
 import { ApiDonationsWeb } from './config'
 
 export type TypeProductBasicBasket = {
@@ -31,26 +32,6 @@ type CadInsertProductBasicBasket = {
 	quantity: number
 	priority: number
 	ind_essential: boolean
-}
-
-export type TypeCurrentProduct = {
-	productId: number | null
-	quantity: number
-	priority: number
-	ind_essential: boolean
-	link_image: string
-	title: string
-	description: string
-}
-
-export const newCurrentProducts = {
-	productId: null,
-	quantity: 1,
-	priority: 1,
-	ind_essential: false,
-	link_image: '',
-	title: '',
-	description: '',
 }
 
 export const getBasicBaskets = async (
