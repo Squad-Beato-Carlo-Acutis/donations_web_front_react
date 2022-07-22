@@ -77,6 +77,9 @@ export const createOrUpdateProductNeeded = async ({
 	product,
 	conferenceId,
 }: TypeParamCreateOrUpdateProductNeeded) => {
+
+	if(!product?.length) return
+
 	const { data } = await ApiDonationsWeb.post(
 		`/api/v1/conference/${conferenceId}/productsneeded`,
 		product

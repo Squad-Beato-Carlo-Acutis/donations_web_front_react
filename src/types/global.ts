@@ -1,6 +1,6 @@
 export type TypeCurrentProduct = {
-	productId?: number | null
-	quantity?: number
+	productId: number | null
+	quantity: number
 	priority?: number
 	ind_essential?: boolean
 	link_image?: string

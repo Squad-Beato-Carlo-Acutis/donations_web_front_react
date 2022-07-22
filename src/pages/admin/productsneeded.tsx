@@ -22,7 +22,7 @@ import Header from '../../components/Header'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import CustomList from '../../components/CustomList'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Swal from 'sweetalert2'
 import { GetServerSideProps } from 'next'
 import { parseCookies } from 'nookies'
@@ -33,6 +33,7 @@ import {
 import { Pagination } from '../../components/Pagination'
 import {
 	createOrUpdateProductNeeded,
+	GetProductNeededFormData,
 	getProductsNeeded,
 	mergeTwoArrays,
 } from '../../repository/donationsApi/productsNeeded'
@@ -61,7 +62,7 @@ export default function ProductsNeeded() {
 	const { register, handleSubmit, setValue, reset } = useForm({
 		resolver: yupResolver(schema),
 	})
-	const [customData, setCustomData] = useState<any[]>()
+	const [customData, setCustomData] = useState<any[]>([])
 	const [isLoading, setIsLoading] = useState(true)
 	const [isFullLoading, setIsFullLoading] = useState(false)
 	const [isNewProductsNeeded, setIsNewProductsNeeded] = useState(false)
@@ -124,8 +125,8 @@ export default function ProductsNeeded() {
 
 		try {
 			const newsProducts = currentProducts.map((product) => ({
-				productId: product.productId,
-				quantity: product.quantity,
+				productId: product.productId || 0,
+				quantity: product.quantity || 0,
 			}))
 
 			await createOrUpdateProductNeeded({
@@ -185,13 +186,13 @@ export default function ProductsNeeded() {
 		onOpen()
 	}
 
-	const loadCurrentProductModal = (isNew: boolean, data = null) => {
-		if (isNew) {
+	const loadCurrentProductModal = (isNew: boolean, data: GetProductNeededFormData[] = []) => {
+		if (isNew || !data) {
 			setCurrentProducts([])
 			return
 		}
 
-		const arrayTemp = []
+		const arrayTemp: TypeCurrentProduct[] = []
 		data?.map(
 			({
 				productDescription,
@@ -288,7 +289,7 @@ export default function ProductsNeeded() {
 
 			if (!product?.length) return
 
-			const arrayTemp = []
+			const arrayTemp: TypeCurrentProduct[] = []
 			product?.map(
 				({
 					product: {
@@ -440,8 +441,8 @@ export default function ProductsNeeded() {
 						colums={[1, 2, 4, 5]}
 						data={currentProducts?.map(
 							({ link_image, title, description, quantity }) => ({
-								avatarLink: getImageLinkApi(link_image),
-								name: title,
+								avatarLink: getImageLinkApi(link_image || ''),
+								name: title || '',
 								description: `${quantity} ${description}`,
 							})
 						)}
